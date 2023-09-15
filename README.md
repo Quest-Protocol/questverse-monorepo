@@ -17,7 +17,7 @@ Indexer adapted from `near/queryapi` which is used to run and host indexers that
 3. [Signing Service](./tx-signing-service)
 This service allows users to retrieve a `receipt` that allows them to redeem their rewards for compeleting quests.The service validates that the user completed the quest and signs a tx for the intended `account_id` to redeem the reward from the protocol deployed at `quests.near` 
 
-3. [BOS Components](./widgets)
+4. [BOS Components](./widgets)
 UI components hosted on the BOS which let users sign up for quests, create quests, see a leaderboard of fellow questors, as well as redeem your quest rewards.
 
 ### Possible Use Cases: 
