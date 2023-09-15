@@ -9,6 +9,17 @@ We think that incentivized Quests (NFTs or USDC/Near/ETH) are an excellent tool 
 
 By creating a robust toolkit for creating, validating, and claiming quests we have made this effective tool available for everyone to utilize in a fair way. 
 
+## 🧩 Components
+1. [Quest Protocol Contract](./contracts/block-quests)
+A smart contract on the Near Blockchain that handles quest creation, indexer configuration for quests, and quest reward redemptions.
+2. [quest-indexer](./quest-indexer/runner)
+Indexer adapted from `near/queryapi` which is used to run and host indexers that power quests. The service exposes a GraphQL endpoint to fetch information completion status for each quest. The `tx-signing-service` uses this endpoint to validate and create reward redemption receipts. You can follow the project [here](https://github.com/near/queryapi)
+3. [Signing Service](./tx-signing-service)
+This service allows users to retrieve a `receipt` that allows them to redeem their rewards for compeleting quests.The service validates that the user completed the quest and signs a tx for the intended `account_id` to redeem the reward from the protocol deployed at `quests.near` 
+
+3. [BOS Components](./widgets)
+UI components hosted on the BOS which let users sign up for quests, create quests, see a leaderboard of fellow questors, as well as redeem your quest rewards.
+
 ### Possible Use Cases: 
 
 ####  **For Education:**
