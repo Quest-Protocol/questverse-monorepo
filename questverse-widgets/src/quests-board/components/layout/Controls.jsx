@@ -62,8 +62,8 @@ return (
       }}
       href={href("Create", { labels: props.labels })}
     >
-      <i class="bi bi-plus-circle-fill"></i>
-      Post
+      <i class="disabled bi bi-plus-circle-fill"></i>
+      Create A Quest
     </a>
   </div>
 );

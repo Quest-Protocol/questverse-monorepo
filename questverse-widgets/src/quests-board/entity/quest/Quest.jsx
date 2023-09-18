@@ -1,4 +1,67 @@
+console.log("loading for each quest");
 /* INCLUDE: "common.jsx" */
+const creatorQuest = {
+  id: 823740323,
+  title: "Creator Quest",
+  description: "Publish at least 3 widgets",
+  imageUrl: "Publish at least 3 widgets",
+  quest_type: "Native",
+  start_time: 1695018482000,
+  end_time: 1695630800000,
+  reward_amount: 1,
+  total_participants_allowed: 50,
+  indexer_config_id: "creator_quest",
+  deployer_account_id: "roshaan.near",
+};
+
+const composerQuest = {
+  id: 873740323,
+  quest_order: 1,
+  title: "Composer Quest",
+  description: "Compose Two or more components together into one",
+  quest_type: "Native",
+  start_time: 1695018482000,
+  end_time: 1695018482000,
+  reward_amount: 0.005,
+  total_participants_allowed: 50,
+  indexer_config_id: "composer_quest",
+  deployer_account_id: "near",
+};
+
+const contractorQuest = {
+  id: 893740323,
+  quest_order: 1,
+  title: "Contractor Quest",
+  description: "Deploy a smart contract and be a BOS developer",
+  quest_type: "Native",
+  start_time: 1695018482000,
+  end_time: 1699018482000,
+  reward_amount: 10,
+  total_participants_allowed: 30,
+  indexer_config_id: "contractor_quest",
+  deployer_account_id: "devgovgigs.near",
+};
+
+const governanceQuest = {
+  id: 813740323,
+  quest_order: 1,
+  title: "Near NDC",
+  description: "Join a Dao & Vote on a proposal.",
+  quest_type: "NFT",
+  start_time: 1694700077000,
+  end_time: 1695018482000,
+  reward_amount: 1,
+  total_participants_allowed: 15,
+  indexer_config_id: "governance_quest",
+  deployer_account_id: "election.ndctools.near",
+};
+
+const mockedQuests = {
+  873740323: composerQuest,
+  823740323: creatorQuest,
+  893740323: contractorQuest,
+  813740323: governanceQuest,
+};
 const nearQuestVerseContractAccountId =
   props.nearQuestVerseContractAccountId ||
   (context.widgetSrc ?? "quests.near").split("/", 1)[0];
@@ -37,16 +100,12 @@ function href(widgetName, linkProps) {
       props.nearQuestVerseWidgetsAccountId;
   }
 
-  if (props.referral) {
-    linkProps.referral = props.referral;
-  }
-
   const linkPropsQuery = Object.entries(linkProps)
     .filter(([_key, nullable]) => (nullable ?? null) !== null)
     .map(([key, value]) => `${key}=${value}`)
     .join("&");
 
-  return `/#/${nearQuestVerseWidgetsAccountId}/widget/quests-board.pages.${widgetName}${linkPropsQuery ? "?" : ""
+  return `/#/${nearQuestVerseWidgetsAccountId}/widget/quests-board.entity.quest.${widgetName}${linkPropsQuery ? "?" : ""
     }${linkPropsQuery}`;
 }
 /* END_INCLUDE: "common.jsx" */
@@ -88,32 +147,48 @@ const ButtonWithHover = styled.button`
 `;
 
 const questId = props.quest.id ?? (props.id ? parseInt(props.id) : 0);
+console.log(JSON.stringify(props), "printing all props");
 const quest =
   props.quest ??
+  mockedQuests[questId] ??
   Near.view(nearQuestVerseContractAccountId, "get_quest_by_id", {
     quest_id: questId,
   });
 if (!quest) {
   return <div>Loading ...</div>;
 }
-
+console.log("quest", quest);
 const currentTimestamp = props.timestamp;
 const compareTimestamp = props.compareTimestamp ?? "";
 const swapTimestamps = currentTimestamp < compareTimestamp;
 
 function readableDate(timestamp) {
   var a = new Date(timestamp);
+  console.log(a, "a");
   return a.toDateString() + " " + a.toLocaleTimeString();
 }
 
-const timestamp = readableDate(
-  snapshot.timestamp ? snapshot.timestamp / 1000000 : Date.now()
-);
+const start_timestamp = readableDate(quest.start_time);
+const end_timestamp = readableDate(quest.end_time);
+
+const is_quest_expired = quest.end_time < Date.now() * 1000000;
+const is_quest_active = quest.start_time < Date.now() * 1000000;
+const is_quest_upcoming = quest.start_time > Date.now() * 1000000;
+
+const quest_status = () => {
+  if (is_quest_expired) {
+    return "Expired";
+  } else if (is_quest_active) {
+    return "Active";
+  } else if (is_quest_upcoming) {
+    return "Upcoming";
+  }
+};
 
 const shareButton = (
   <a
     class="card-link text-dark"
-    href={href("Post", { id: questId })}
+    href={href("Quest", { id: questId })}
     role="button"
     target="_blank"
     title="Open in new tab"
@@ -129,12 +204,14 @@ const header = (
       <div class="row justify-content-between">
         <div class="col-4">
           {widget("components.molecule.profile-card", {
-            accountId: post.deployer_id,
+            accountId: quest.deployer_account_id,
           })}
         </div>
         <div class="col-5">
           <div class="d-flex justify-content-end">
-            {timestamp}
+            Quest Status: {quest_status()}
+  </div>
+          <div class="d-flex justify-content-end">
             {shareButton}
           </div>
         </div>
@@ -143,11 +220,52 @@ const header = (
   </div>
 );
 
+const editUrl = `https://near.org/#/dev-queryapi.dataplatform.near/widget/QueryApi.App?selectedIndexerPath=morgs.near/bos_quests/view=editor-window`;
+const tokenMapping = {
+  NEAR: "NEAR",
+  Native: "NEAR",
+  NFT: "Digital Collectible",
+};
+
+// const reverseTokenMapping = Object.keys(tokenMapping).reduce(
+//   (reverseMap, key) => {
+//     const value = tokenMapping[key];
+//     if (typeof value === "object") {
+//       reverseMap[JSON.stringify(value)] = key;
+//     }
+//     return reverseMap;
+//   },
+//   {}
+// );
+function tokenResolver(reward_type) {
+    const tokenString = tokenMapping[reward_type];
+    return tokenString || null;
+}
+const questExtra = (
+  <div key="quest-extra">
+    <h6>
+      <a class="text-muted" href={editUrl}>
+        Live Indexer: Dataplatform.near/{quest.indexer_config_id}
+      </a>
+    </h6>
+    <h6 class="card-subtitle mb-2 text-muted">
+      Reward amount: {quest.reward_amount} {tokenResolver(quest.quest_type)}
+    </h6>
+    <h6 class="card-subtitle mb-2 text-muted">
+      Total Participants Allowed: {quest.total_participants_allowed}
+    </h6>
+    <h6 class="card-subtitle mb-2 text-muted">
+      Quest Starts {start_timestamp}
+    </h6>
+    <h6 class="card-subtitle mb-2 text-muted">Quest Ends {end_timestamp}</h6>
+  </div>
+);
+
 // TODO Replace likes on Quests with Quest Signups.
 //
 //
 // const containsLike = quest.likes.find((l) => l.author_id == context.accountId);
-// const likeBtnClass = containsLike ? fillIcons.Like : emptyIcons.Like;
+const likeBtnClass = containsLike ? fillIcons.Like : emptyIcons.Like;
 // This must be outside onLike, because Near.view returns null at first, and when the view call finished, it returns true/false.
 // If checking this inside onLike, it will give `null` and we cannot tell the result is true or false.
 // let grantNotify = Near.view("social.near", "is_write_permission_granted", {
@@ -188,81 +306,44 @@ const header = (
 //   Near.call(likeTxn);
 // };
 //
-// const buttonsFooter =
-//   <div class="row" key="buttons-footer">
-//     <div class="col-8">
-//       <div class="btn-group" role="group" aria-label="Basic outlined example">
-//         <ButtonWithHover
-//           type="button"
-//           class="btn"
-//           style={{ border: "0px" }}
-//           onClick={onLike}
-//         >
-//           <i class={`bi ${likeBtnClass}`}> </i>
-//           {post.likes.length == 0
-//             ? "Like"
-//             : widget("components.layout.LikeButton.Faces", {
-//                 likesByUsers: Object.fromEntries(
-//                   post.likes.map(({ author_id }) => [author_id, ""])
-//                 ),
-//               })}
-//         </ButtonWithHover>
-//       </div>
-//     </div>
-//   </div>;
+  const Button = styled.button`
+  height: 40px;
+  font-size: 14px;
+  background-color: #1778F2;
+`;
 
-// const tokenMapping = {
-//   NEAR: "NEAR",
-//   USDT: {
-//     NEP141: {
-//       address: "usdt.tether-token.near",
-//     },
-//   },
-//   // Add more tokens here as needed
-// };
+const buttonsFooter =
+  <div class="d-flex justify-content-end" key="buttons-footer">
+    <div class="col-8">
+      <div class="d-flex justify-content-end" aria-label="Basic outlined example">
+        <Button
+          type="button"
+          style={{"color":"white"}}
+          onClick={onParticipate}
+        >
+        Sign Up for Quest!
+        </Button>
+      </div>
+    </div>
+  </div>;
 
-// const reverseTokenMapping = Object.keys(tokenMapping).reduce(
-//   (reverseMap, key) => {
-//     const value = tokenMapping[key];
-//     if (typeof value === "object") {
-//       reverseMap[JSON.stringify(value)] = key;
-//     }
-//     return reverseMap;
-//   },
-//   {}
-// );
 //
-// function tokenResolver(token) {
-//   if (typeof token === "string") {
-//     return token;
-//   } else if (typeof token === "object") {
-//     const tokenString = reverseTokenMapping[JSON.stringify(token)];
-//     return tokenString || null;
-//   } else {
-//     return null; // Invalid input
-//   }
-// }
-//
-initState({
-  quest: undefined,
-});
 
-const timestampElement = (_snapshot) => {
+const timestampElement = (quest) => {
   return (
     <a
       class="text-muted"
-      href={href("Post", {
-        id: postId,
-        timestamp: _snapshot.timestamp,
-        compareTimestamp: null,
-        referral,
+      href={href("Quest", {
+        id: quest.questId,
+        timestamp: quest.start_time,
       })}
     >
-      {readableDate(_snapshot.timestamp / 1000000).substring(4)}
+      Starts: {readableDate(quest.start_time).substring(4)}
+      Ends: {readableDate(quest.end_time).substring(4)}
       <Widget
         src="mob.near/widget/ProfileImage"
         props={{
-          accountId: _snapshot.editor_id,
+          accountId: quest.deployer_id,
           style: {
             width: "1.25em",
             height: "1.25em",
@@ -277,10 +358,6 @@ const timestampElement = (_snapshot) => {
 };
 
 const renderQuest = (quest) => {
-  const {title, description, imageUrl} = quest
-  console.log("rendereding quest", quest);
-  const accountId = props.accountId;
-
   const Card = styled.div`
     position: relative;
     width: 100%;
@@ -434,7 +511,7 @@ const renderQuest = (quest) => {
             src="mob.near/widget/Image"
             props={{
               image: metadata.image,
-              fallbackUrl: imageUrl,
+              fallbackUrl: quest.imageUrl,
               alt: "Near QueryApi indexer",
             }}
           />
@@ -442,26 +519,97 @@ const renderQuest = (quest) => {
         <Row>
           <div className={{ display: "flex", "flex-direction": "row" }}>
             <TextLink as="a" bold ellipsis>
-              {title}
+              {quest.title}
             </TextLink>
           </div>
-          <div>{description}</div>
+    Description: <div>{quest.description}</div>
         </Row>
       </CardBody>
     </Card>
   );
 };
 
+const emptyIcons = {
+  Native: "bi-currency-bitcoin",
+  Nft: "bi-palette-fill",
+  Like: "bi-heart",
+  Reply: "bi-reply",
+};
+
+// <i class={`bi ${emptyIcons[quest.quest_type]}`}> </i>
+const questTitle =
+  quest.quest_order != 1 ? (
+    <div key="post-title"></div>
+  ) : (
+    <h5 class="card-title mb-2" key="post-title">
+      <div className="row justify-content-between">
+        <div class="col-9">
+          {quest.title}
+        </div>
+      </div>
+    </h5>
+  );
+
+const contentArray = quest.description.split("\n");
+const needClamp = contentArray.length > 5;
+
+initState({
+  quest: undefined,
+  clamp: needClamp,
+});
+
+console.log("load props here Quest 2, ", props);
+const clampedContent = needClamp
+  ? contentArray.slice(0, 3).join("\n")
+  : quest.description;
+
+// Should make sure the posts under the currently top viewed post are limited in size.
+const descriptionArea = (
+  <div class="pt-2">
+    <div class={state.clamp ? "clamp" : ""}>
+      {widget("components.molecule.markdown-viewer", {
+        text: `Description: ${state.clamp ? clampedContent : quest.description}`,
+      })}
+    </div>
+    {state.clamp ? (
+      <div class="d-flex justify-content-start">
+        <a
+          class="btn-link text-dark fw-bold text-decoration-none"
+          onClick={() => State.update({ clamp: false })}
+        >
+          See more
+        </a>
+      </div>
+    ) : (
+      <></>
+    )}
+  </div>
+);
+// isSecondaryQuest ? (
+// <LimitedMarkdown className="overflow-auto" key="description-area">
+//   {widget("components.molecule.markdown-viewer", {
+//     text: quest.description,
+//   })}
+// </LimitedMarkdown>
+// ) :
+
 const renderedQuest = () => {
   <div class="row" key="quests-list">
-    <div>
-      renderQuest(quest)
-    </div>
-  </div>
-}
+    <div>renderQuest(quest)</div>
+  </div>;
+};
+
+console.log("load props here Quest 1, ", props);
 return (
   <AttractableDiv className={`card`}>
     {header}
-    <div className="card-body">{quest}</div>
+    <div className="card-body">
+      <>
+        {questTitle}
+        {questExtra}
+        {descriptionArea}
+      </>
+      {buttonsFooter}
+    </div>
   </AttractableDiv>
 );

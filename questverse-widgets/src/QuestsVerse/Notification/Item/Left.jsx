@@ -59,7 +59,7 @@ if (!props.type) {
 const type = props.type.split("/")[1];
 return props.type ? (
   <>
-    <a className="fw-bold text-muted" href={href("Post", { id: props.post })}>
+    <a className="fw-bold text-muted" href={href("Quest", { id: props.quest })}>
       New Quest Avalaible
     </a>
   </>

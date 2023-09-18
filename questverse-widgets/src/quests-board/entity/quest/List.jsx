@@ -1,12 +1,5 @@
-
-// This component implementation was forked from [IndexFeed], but it does not fully implement lazy loading.
-// While this component uses InfiniteScroll, it still loads the whole list of Post IDs in one view call.
-// The contract will need to be extended with pagination support, yet, even in the current state the page loads much faster.
-// [IndexFeed]: https://near.social/#/mob.near/widget/WidgetSource?src=mob.near/widget/IndexFeed
-
-/* INCLUDE: "common.jsx" */
-const questVersePrtocolAccountId =
-  props.questVersePrtocolAccountId ||
+const questVerseProtocolAccountId =
+  props.questVerseProtocolAccountId ||
   (context.widgetSrc ?? "quests.near").split("/", 1)[0];
 
 const nearQuestVerseWidgetsAccountId =
@@ -16,7 +9,7 @@ const nearQuestVerseWidgetsAccountId =
 function widget(widgetName, widgetProps, key) {
   widgetProps = {
     ...widgetProps,
-    questVersePrtocolAccountId: props.questVersePrtocolAccountId,
+    questVerseProtocolAccountId: props.questVerseProtocolAccountId,
     nearQuestVerseWidgetsAccountId: props.nearQuestVerseWidgetsAccountId,
     referral: props.referral,
   };
@@ -33,18 +26,13 @@ function widget(widgetName, widgetProps, key) {
 function href(widgetName, linkProps) {
   linkProps = { ...linkProps };
 
-  if (props.questVersePrtocolAccountId) {
-    linkProps.questVersePrtocolAccountId =
-      props.questVersePrtocolAccountId;
+  if (props.questVerseProtocolAccountId) {
+    linkProps.questVerseProtocolAccountId = props.questVerseProtocolAccountId;
   }
 
   if (props.nearQuestVerseWidgetsAccountId) {
     linkProps.nearQuestVerseWidgetsAccountId =
       props.nearQuestVerseWidgetsAccountId;
-  }
-
-  if (props.referral) {
-    linkProps.referral = props.referral;
   }
 
   const linkPropsQuery = Object.entries(linkProps)
@@ -60,6 +48,8 @@ function defaultRenderItem(questId, additionalProps) {
   if (!additionalProps) {
     additionalProps = {};
   }
+  console.log(questId, "questId")
+  console.log("loading default")
   // It is important to have a non-zero-height element as otherwise InfiniteScroll loads too many items on initial load
   return (
     <div className="py-2" style={{ minHeight: "150px" }}>
@@ -84,6 +74,8 @@ const cachedRenderItem = (item, i) => {
     state.cachedItems[key] = renderItem(item);
     State.update();
   }
+
+  console.log("didint load catched")
   return state.cachedItems[key];
 };
 
@@ -94,19 +86,20 @@ const ONE_DAY = 60 * 60 * 24 * 1000;
 const ONE_WEEK = 60 * 60 * 24 * 1000 * 7;
 const ONE_MONTH = 60 * 60 * 24 * 1000 * 30;
 
-let questIds;
-if (props.recency == "all") {
-  questIds = Near.view(questVersePrtocolAccountId, "get_all_quest_ids");
-  if (questIds) {
-    questIds.reverse();
-  }
-} else if (props.recency == "active") {
-  console.log("loading active");
-} else if (props.recency == "expired") {
-  console.log("loading expired");
-} else if (props.recency == "upcoming") {
-  console.log("loading upcoming");
-}
+let questIds = [813740323, 893740323, 873740323, 823740323];
+// if (props.recency == "all") {
+//   questIds = Near.view(questVerseProtocolAccountId, "get_all_quest_ids");
+//   if (questIds) {
+//     questIds.reverse();
+//   }
+// } else if (props.recency == "active") {
+//   console.log("loading active");
+// } else if (props.recency == "expired") {
+//   console.log("loading expired");
+// } else if (props.recency == "upcoming") {
+//   console.log("loading upcoming");
+// }
+console.log("load props here 3, ", props)
 
 const loader = (
   <div className="loader" key={"loader"}>
@@ -122,12 +115,11 @@ const loader = (
 if (questIds === null) {
   return loader;
 }
+
 const initialItems = questIds;
 const jInitialItems = JSON.stringify(initialItems);
 
 if (state.jInitialItems !== jInitialItems) {
-  // const jIndex = JSON.stringify(index);
-  // if (jIndex !== state.jIndex) {
   State.update({
     jIndex,
     jInitialItems,
