@@ -135,9 +135,9 @@ pub struct QuestProtocol {
     // indexer configurations. At this moment only editable by the owner
     indexer_configs_by_id: LookupMap<FunctionName, QueryApiIndexerConfig>,
     // quests by a quest_id
-    quest_by_id: LookupMap<QuestId, Quest>,
+    quest_by_id: UnorderedMap<QuestId, Quest>,
     // ids of quests created by deployer account
-    quest_ids_by_deployer: LookupMap<AccountId, UnorderedSet<QuestId>>,
+    quest_ids_by_deployer: UnorderedMap<AccountId, UnorderedSet<QuestId>>,
     // Set of whitelisted tokens by contract owner
     whitelisted_tokens: UnorderedSet<AccountId>,
     // claim signer public key. This key will be used to authenticate claims.
@@ -153,8 +153,8 @@ impl QuestProtocol {
     pub fn new(owner_id: AccountId, claim_signer_public_key: String) -> Self {
         Self {
             contract_owner_id: owner_id,
-            quest_by_id: LookupMap::new(StorageKeys::QuestById),
-            quest_ids_by_deployer: LookupMap::new(StorageKeys::QuestIdsByDeployer),
+            quest_by_id: UnorderedMap::new(StorageKeys::QuestById),
+            quest_ids_by_deployer: UnorderedMap::new(StorageKeys::QuestIdsByDeployer),
             indexer_configs_by_id: LookupMap::new(StorageKeys::IndexerConfigsById),
             whitelisted_tokens: UnorderedSet::new(StorageKeys::Whitelist),
             claim_signer_public_key: claim_signer_public_key.parse().unwrap(),
@@ -330,54 +330,6 @@ impl QuestProtocol {
         unimplemented!()
     }
 
-    #[private]
-    fn handle_reward(&mut self, quest: &Quest, receiver_id: AccountId) {
-        match quest.quest_type {
-            RewardType::Native => {}
-            // Handle NEAR reward
-            // let payout = quest.reward_config.reward_amount.0;
-            // let promise = env::promise_create(receiver_id, payout);
-            // Check promise return (left as an exercise)
-            //             pub fn create_drop(
-            // &mut self,
-            // drop_id: DropId,
-            // key_data: Vec<ExtKeyData>,
-            // asset_data: Vec<ExtAssetDataForUses>,
-            //
-            // drop_config: Option<DropConfig>,
-            // // Should any excess attached deposit be deposited to the user's balance?
-            // keep_excess_deposit: Option<bool>
-            //
-            //         let key_data =                    ExtKeyData {
-            // public_key: QUESTS_PROTOCOL_PUBLIC_KEY.parse().unwrap(),
-            //     key_owner: self.contract_owner_id.parse().unwrap()
-            //         } ;
-
-            // let keypom_drop_details = {
-            //     drop_id: quest_id,
-            //
-            //
-            // }
-            //     Promise::new(KEYPOM_CONTRACT.parse().unwrap())
-            //         .function_call("create_drop".to_string(), args, NO_DEPOSIT, CALL_GAS)
-            //         .then(Promise::new(env::current_account_id()).function_call(
-            //             "callback".to_string(),
-            //             Vec::new(),
-            //             NO_DEPOSIT,
-            //             CALL_GAS,
-            //         ));
-            // }
-            RewardType::FT => {
-                // Handle NEP-141 (FT) reward
-                // You'd make a cross-contract call here (left as an exercise)
-            }
-            RewardType::NFT => {
-                // Handle NEP-177 (NFT) reward
-                // You'd make a cross-contract call here (left as an exercise)
-            }
-        }
-    }
-
     pub fn set_global_freeze(&mut self, freeze: bool) {
         self.assert_owner_calling();
         self.global_freeze = freeze;
@@ -405,14 +357,32 @@ impl QuestProtocol {
         self.claim_signer_public_key = new_signer;
     }
 
-    // VIEW METHODS
-    //
-    pub fn get_quest(&self, quest_id: String) -> Option<Quest> {
-        unimplemented!()
+    /// View Functions
+    pub fn get_all_deployers(&self) -> Vec<AccountId> {
+        let deployers: Vec<_> = self.quest_ids_by_deployer.keys().collect();
+        deployers
     }
 
-    pub fn get_quests_by_account(&self, account_id: AccountId) -> Vec<QuestId> {
-        unimplemented!()
+    pub fn get_all_quests(&self) -> Vec<Quest> {
+        let quests: Vec<_> = self.quest_by_id.values().collect();
+        quests
+    }
+
+    pub fn quests_by_deployer(&self, deployer: AccountId) -> Vec<QuestId> {
+        if let Some(quest_id_set) = self.quest_ids_by_deployer.get(&deployer) {
+            if !quest_id_set.is_empty() {
+                return quest_id_set.to_vec();
+            }
+        }
+        vec![U128(0)]
+    }
+
+    pub fn quest_by_id(&self, quest_id: QuestId) -> Option<Quest> {
+        self.quest_by_id.get(&quest_id)
+    }
+
+    pub fn indexer_configs_by_id(&self, config_id: String) -> Option<QueryApiIndexerConfig> {
+        self.indexer_configs_by_id.get(&config_id)
     }
 
     pub fn check_claim_status(&self, quest_id: String, account_id: AccountId) -> ClaimStatus {
