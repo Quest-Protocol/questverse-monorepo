@@ -7,11 +7,18 @@
     "build": "npm run build:contract",
 		"dev-deploy": "echo building contract && yarn build && echo removing neardev && rm -rf neardev && echo deploying && (near dev-deploy --wasmFile out/quest-verse-protocol.wasm || exit 0)",
     "build:contract": "cd contract && ./build.sh",
+		"test:simple": "ava integration-tests/src/quest-creation/quest-creation.ava.ts",
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "cd contract && cargo test",
-    "test:integration": "npm run build:contract && cd integration-tests && npm test -- -- \"./contract/target/wasm32-unknown-unknown/release/quest_protocol.wasm\"",
-    "postinstall": "echo no frontend && echo rs tests && echo rs contract"
+    "test:integration": "npm run build:contract && cd integration-tests && npm test -- -- \"./contract/target/wasm32-unknown-unknown/release/quest_protocol.wasm\""
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@types/bn.js": "^5.1.0",
+    "@types/node": "^18.6.2",
+    "ava": "^4.2.0",
+    "near-workspaces": "^3.2.1",
+    "ts-node": "^10.8.0",
+    "typescript": "^4.7.2"
+  },
   "dependencies": {}
 }

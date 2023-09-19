@@ -7,6 +7,10 @@ export const WALLET_GAS: string = "100000000000000";
 export const DEFAULT_DEPOSIT: string = "1000000000000000000000000";
 export const GAS_PRICE: BN = new BN("100000000");
 export const DEFAULT_TERRA_IN_NEAR: string = "3000000000000000000000";
+export const CONTRACT_METADATA = {
+  "version": "1.0.0",
+  "link": "https://github.com/mattlockyer/proxy/commit/71a943ea8b7f5a3b7d9e9ac2208940f074f8afba",
+}
 
 export function displayFailureLog(
   transaction: TransactionResult
