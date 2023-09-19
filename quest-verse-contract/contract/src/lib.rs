@@ -178,9 +178,12 @@ impl QuestProtocol {
         let contract_drop_public_key: PublicKey = QUESTS_PROTOCOL_PUBLIC_KEY_STR.parse().unwrap(); // Ensuring start_time is before end_time
         require!(start_time < end_time, "Start time must be before end time.");
 
+        let result = self.quest_by_id.get(&quest_id).is_some();
+
+        log!("{}", result);
         // Checking if the quest with given quest_id already exists
         require!(
-            !self.quest_by_id.contains_key(&quest_id),
+            self.quest_by_id.get(&quest_id).is_some(),
             "Quest with this ID already exists."
         );
 
@@ -245,20 +248,21 @@ impl QuestProtocol {
 
         log!("Quest created successfully");
         let near_attached = env::attached_deposit();
+        log!("attached_deposit: {}", near_attached.clone());
 
         // Deserialize the returned object.
-        let drop_id: Result<U128, _> = serde_json::from_str(&call_result.unwrap());
+        let drop_id: U128 = serde_json::from_str(&call_result.unwrap()).unwrap();
 
         let promise = keypom_near::ext(KEYPOM_CONTRACT.parse().unwrap())
             .with_attached_deposit(near_attached)
             .with_static_gas(Gas(5 * TGAS))
-            .get_drop_information(Some(drop_id.clone().unwrap()), None);
+            .get_drop_information(Some(drop_id), None);
 
         promise.then(
             Self::ext(env::current_account_id())
                 .with_attached_deposit(near_attached)
                 .with_static_gas(Gas(5 * TGAS))
-                .internal_create_quest(drop_id.clone().unwrap()),
+                .internal_create_quest(drop_id),
         );
         //
         //
@@ -281,10 +285,10 @@ impl QuestProtocol {
     #[private]
     pub fn internal_create_quest(
         &mut self,
-        drop_id: U128,
+        quest_id: U128,
         #[callback_result] call_result: Result<String, PromiseError>,
     ) -> bool {
-        log!("dropId, {}", u128::from(drop_id));
+        log!("quest_id, {}", u128::from(quest_id));
         let account_id = env::signer_account_id();
 
         if call_result.is_err() {

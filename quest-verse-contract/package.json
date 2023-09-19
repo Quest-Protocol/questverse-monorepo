@@ -5,14 +5,13 @@
   "scripts": {
     "deploy": "cd contract && ./deploy.sh",
     "build": "npm run build:contract",
+		"dev-deploy": "echo building contract && yarn build && echo removing neardev && rm -rf neardev && echo deploying && (near dev-deploy --wasmFile out/quest-verse-protocol.wasm || exit 0)",
     "build:contract": "cd contract && ./build.sh",
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "cd contract && cargo test",
-    "test:integration": "cd integration-tests && cargo run --example integration-tests \"../contract/target/wasm32-unknown-unknown/release/hello_near.wasm\"",
+    "test:integration": "npm run build:contract && cd integration-tests && npm test -- -- \"./contract/target/wasm32-unknown-unknown/release/quest_protocol.wasm\"",
     "postinstall": "echo no frontend && echo rs tests && echo rs contract"
   },
-  "devDependencies": {
-    "near-cli": "^3.3.0"
-  },
+  "devDependencies": {},
   "dependencies": {}
 }
