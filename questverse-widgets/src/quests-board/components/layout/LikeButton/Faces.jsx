@@ -51,48 +51,30 @@ function href(widgetName, linkProps) {
   }${linkPropsQuery}`;
 }
 /* END_INCLUDE: "common.jsx" */
-
 const accountId = context.accountId;
 
-const likesByUsers = props.likesByUsers || {};
 const limit = props.limit ?? 3;
 
-let likes = Object.keys(likesByUsers).reverse();
-
-const graphLikes = [];
-const nonGraph = [];
-
-const graph =
-  (accountId &&
-    Social.keys(`${accountId}/graph/follow/*`, "final")[accountId].graph
-      .follow) ||
-  {};
-
-likes.forEach((accountId) => {
-  if (accountId in graph) {
-    graphLikes.push(accountId);
-  } else {
-    nonGraph.push(accountId);
-  }
-});
-
-let faces = [...graphLikes, ...nonGraph];
+let likes = props.userSignUps;
+let faces = likes;
 
 if (faces.length < limit + 3) {
   limit = faces.length;
 }
 
-const renderFaces = faces.splice(0, limit);
+const renderFaces = faces.slice(0, limit);
 
 const Faces = styled.span`
+  display: flex;
   .face {
-    display: inline-block;
+    display: flex;
     position: relative;
     margin: -0.1em;
     height: 1.5em;
     width: 1.5em;
     min-width: 1.5em;
     vertical-align: top;
+    flex-direction: column;
     img {
       object-fit: cover;
       border-radius: 50%;
@@ -130,7 +112,7 @@ return (
                     metadata,
                     accountId,
                     widgetName,
-                    style: { zIndex: 10 - i },
+                    style: { zIndex: 10 - i, flexDirection: "column" },
                     className: "face",
                     tooltip: false,
                     imageStyle: {},

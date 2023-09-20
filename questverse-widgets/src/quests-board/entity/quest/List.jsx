@@ -48,8 +48,6 @@ function defaultRenderItem(questId, additionalProps) {
   if (!additionalProps) {
     additionalProps = {};
   }
-  console.log(questId, "questId")
-  console.log("loading default")
   // It is important to have a non-zero-height element as otherwise InfiniteScroll loads too many items on initial load
   return (
     <div className="py-2" style={{ minHeight: "150px" }}>
@@ -75,7 +73,6 @@ const cachedRenderItem = (item, i) => {
     State.update();
   }
 
-  console.log("didint load catched")
   return state.cachedItems[key];
 };
 
@@ -99,7 +96,6 @@ let questIds = [813740323, 893740323, 873740323, 823740323];
 // } else if (props.recency == "upcoming") {
 //   console.log("loading upcoming");
 // }
-console.log("load props here 3, ", props)
 
 const loader = (
   <div className="loader" key={"loader"}>

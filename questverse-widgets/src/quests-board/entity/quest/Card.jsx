@@ -17,7 +17,7 @@ const creatorQuest = {
   deployerAccountId: "roshaan.near",
   status: "Active",
   tags: ["onboarding", "developer"],
-  signUps: []
+  signUps: ["roshaan.near"],
 };
 
 const composerQuest = {
@@ -34,7 +34,7 @@ const composerQuest = {
   deployerAccountId: "near",
   status: "Expired",
   tags: ["onboarding", "developer"],
-  signUps: ["roshaan.near"]
+  signUps: ["roshaan.near", "nearlymartin.near"],
 };
 
 const contractorQuest = {
@@ -51,7 +51,7 @@ const contractorQuest = {
   deployerAccountId: "devgovgigs.near",
   status: "Expired",
   tags: ["onboarding", "developer"],
-  signUps: ["roshaan.near"]
+  signUps: ["roshaan.near"],
 };
 
 const governanceQuest = {
@@ -68,7 +68,7 @@ const governanceQuest = {
   deployerAccountId: "election.ndctools.near",
   status: "Upcoming",
   tags: ["onboarding", "developer"],
-  signUps: ["roshaan.near"]
+  signUps: ["roshaan.near", "nearlymartin.near", "plugrel.near"],
 };
 
 const mockedQuests = {
@@ -122,13 +122,21 @@ if (!state.questIsFetched || !state.profileIsFetched) {
 const Title = styled.h3`
   font-style: normal;
   font-weight: 600;
-  font-size: 1em;
+  font-size: 1.5em;
   line-height: 1.4em;
   color: #101828;
   flex: none;
   flex-grow: 1;
 `;
 
+const Text = styled.span`
+  display: inline-block;
+  width: 100px;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 1em;
+  color: #101828;
+`;
 const Details = styled.div`
   display: flex;
   flex-direction: row;
@@ -138,6 +146,17 @@ const Details = styled.div`
   flex: none;
   align-self: stretch;
   flex-grow: 0;
+`;
+
+const Header = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 0.5em 0px 0px;
+  gap: 1.5em;
+  flex: none;
+  align-self: stretch;
+  width: 100%;
+  justify-content: space-between;
 `;
 
 const Item = styled.div`
@@ -153,6 +172,17 @@ const Item = styled.div`
   font-size: 0.75em;
   line-height: 1em;
   color: #11181c;
+`;
+
+const TitleContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0.5em 0px 0px;
+  gap: 1.5em;
+  flex: none;
+  align-self: stretch;
+  flex-grow: 0;
 `;
 
 const time = (
@@ -225,32 +255,34 @@ const participantsAllowed = (
 
 const body = (
   <>
-    <Details>
+    <Header>
+      <Details>
+        <Widget
+          src={`${ownerId}/widget/quests-board.components.profile.Icon`}
+          props={{ accountId: state.quest.deployerAccountId, size: "30px" }}
+        />
+        <Widget
+          src={`${ownerId}/widget/quests-board.components.profile.NameAndAccount`}
+          props={{
+            accountId: state.quest.deployerAccountId,
+            name: state.profile.name,
+            nameSize: ".95em",
+            accountSize: ".75em",
+          }}
+        />
+      </Details>
       <Widget
-        src={`${ownerId}/widget/quests-board.components.profile.Icon`}
-        props={{ accountId: state.quest.deployerAccountId, size: "30px" }}
-      />
-      <Widget
-        src={`${ownerId}/widget/quests-board.components.profile.NameAndAccount`}
+        src={`${ownerId}/widget/quests-board.components.molecule.StatusIndicator`}
         props={{
-          accountId: state.quest.deployerAccountId,
-          name: state.profile.name,
-          nameSize: ".95em",
-          accountSize: ".75em",
+          status: state.quest.status,
         }}
       />
-    </Details>
+    </Header>
     <a
       href={`/${ownerId}/widget/Index?tab=quest&deployerAccountId=${state.quest.deployerAccountId}&qid=${qid}`}
     >
-      <Title>{state.quest.title}</Title>
+      <Title className="pt-2">{state.quest.title}</Title>
     </a>
-    <Widget
-      src={`${ownerId}/widget/quests-board.components.molecule.StatusIndicator`}
-      props={{
-        status: state.quest.status,
-      }}
-    />
     <Details>
       {time}
       {rewardAmount}
@@ -317,23 +349,22 @@ const ButtonWithHover = styled.button`
 const onSignUp = () => {
   console.log("signing up for quest");
 };
-const isUserSignedUp = state.quest.signUps.find((l) => l.author_id == context.accountId);
-const signUpButtonClass = isUserSignedUp ? "bi-calendar-plus-fill" : "bi-calendar-plus"
+const isUserSignedUp = state.quest.signUps.find((l) => l == context.accountId);
 const footer = (
   <Footer>
     <div class="row" key="buttons-footer">
       <div class="col-8">
+        <Text>Signed Up</Text>
         <div class="btn-group" role="group" aria-label="Basic outlined example">
           <ButtonWithHover
             type="button"
             class="btn"
-            style={{ border: "0px" }}
+            style={{ border: "0px", marginLeft: "2px" }}
             onClick={onSignUp}
           >
-            <i class={`bi ${signUpButtonClass}`}> </i>
             <Widget
               src={`${ownerId}/widget/quests-board.components.layout.LikeButton.Faces`}
-              props={{ likesByUsers: state.quest.signUps }}
+              props={{ userSignUps: state.quest.signUps }}
             />
           </ButtonWithHover>
         </div>

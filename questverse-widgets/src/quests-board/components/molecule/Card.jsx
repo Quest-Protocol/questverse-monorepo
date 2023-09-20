@@ -17,7 +17,6 @@ const CardContainer = styled.div`
 const CardHeader = styled.div`
   display: ${({ show }) => (show ? "flex" : "none")};
   flex-direction: row;
-  justify-content: center;
   align-items: center;
   padding: 0.5em 0;
   gap: 0.675em;

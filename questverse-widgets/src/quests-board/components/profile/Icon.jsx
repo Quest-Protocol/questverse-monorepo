@@ -49,7 +49,13 @@ const ImageContainer = styled.div`
 `;
 
 return (
-  <ImageContainer title={`${fullName} @${state.accountId}`} size={size}>
-    <ImageCircle src={imageSrc} alt="profile image" />
-  </ImageContainer>
+  <a
+    key={i}
+    href={`#/mob.near/widget/ProfilePage?accountId=${state.accountId}`}
+    className="text-decoration-none d-inline-block"
+  >
+    <ImageContainer title={`${fullName} @${state.accountId}`} size={size}>
+      <ImageCircle src={imageSrc} alt="profile image" />
+    </ImageContainer>
+  </a>
 );

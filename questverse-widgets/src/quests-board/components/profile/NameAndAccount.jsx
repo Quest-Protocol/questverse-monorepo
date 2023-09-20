@@ -5,11 +5,10 @@ const accountSize = props.accountSize ?? "0.95em";
 
 const Container = styled.div`
   display: flex;
-  flex-direction: row;
-  align-items: center;
+  flex-direction: column;
   justify-content: flex-start;
   flex-wrap: wrap;
-  gap: 0.5em;
+  gap: 0.2em;
 `;
 
 const Name = styled.span`
@@ -26,7 +25,6 @@ const Account = styled.span`
   font-style: normal;
   font-weight: 400;
   font-size: ${accountSize};
-  line-height: 1.4em;
   overflow: hidden;
   max-width: 25ch;
   text-overflow: ellipsis;
@@ -54,33 +52,13 @@ if (!state.nameIsFetched) {
 }
 
 return (
+  <a
+    key={i}
+    href={`#/mob.near/widget/ProfilePage?accountId=${accountId}`}
+  >
     <Container>
-      <a
-        key={i}
-        href={`#/mob.near/widget/ProfilePage?accountId=${accountId}`}
-        className="text-decoration-none d-inline-block"
-      >
-        <Widget
-          src="mob.near/widget/Profile.OverlayTrigger"
-          props={{
-            accountId,
-            children: (
-              <Widget
-                src="mob.near/widget/ProfileImage"
-                props={{
-                  accountId,
-                  style: { zIndex: 10 - i },
-                  className: "face",
-                  tooltip: false,
-                  imageStyle: {},
-                  imageClassName: "",
-                }}
-              />
-            ),
-          }}
-        />
       <Name>{state.name}</Name>
       <Account>@{accountId}</Account>
-      </a>
     </Container>
+  </a>
 );
