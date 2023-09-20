@@ -5,13 +5,13 @@ const creatorQuest = {
   title: "Creator Quest",
   description: "Publish at least 3 widgets",
   imageUrl: "Publish at least 3 widgets",
-  quest_type: "Native",
-  start_time: 1695018482000,
-  end_time: 1695630800000,
-  reward_amount: 1,
-  total_participants_allowed: 50,
-  indexer_config_id: "creator_quest",
-  deployer_account_id: "roshaan.near",
+  questType: "Native",
+  startTime: 1695018482000,
+  endTime: 1695630800000,
+  rewardAmount: 1,
+  totalParticipantsAllowed: 50,
+  indexerConfigId: "creator_quest",
+  deployerAccountId: "roshaan.near",
 };
 
 const composerQuest = {
@@ -19,13 +19,13 @@ const composerQuest = {
   quest_order: 1,
   title: "Composer Quest",
   description: "Compose Two or more components together into one",
-  quest_type: "Native",
-  start_time: 1695018482000,
-  end_time: 1695018482000,
-  reward_amount: 0.005,
-  total_participants_allowed: 50,
-  indexer_config_id: "composer_quest",
-  deployer_account_id: "near",
+  questType: "Native",
+  startTime: 1695018482000,
+  endTime: 1695018482000,
+  rewardAmount: 0.005,
+  totalParticipantsAllowed: 50,
+  indexerConfigId: "composer_quest",
+  deployerAccountId: "near",
 };
 
 const contractorQuest = {
@@ -33,13 +33,13 @@ const contractorQuest = {
   quest_order: 1,
   title: "Contractor Quest",
   description: "Deploy a smart contract and be a BOS developer",
-  quest_type: "Native",
-  start_time: 1695018482000,
-  end_time: 1699018482000,
-  reward_amount: 10,
-  total_participants_allowed: 30,
-  indexer_config_id: "contractor_quest",
-  deployer_account_id: "devgovgigs.near",
+  questType: "Native",
+  startTime: 1695018482000,
+  endTime: 1699018482000,
+  rewardAmount: 10,
+  totalParticipantsAllowed: 30,
+  indexerConfigId: "contractor_quest",
+  deployerAccountId: "devgovgigs.near",
 };
 
 const governanceQuest = {
@@ -47,13 +47,13 @@ const governanceQuest = {
   quest_order: 1,
   title: "Near NDC",
   description: "Join a Dao & Vote on a proposal.",
-  quest_type: "NFT",
-  start_time: 1694700077000,
-  end_time: 1695018482000,
-  reward_amount: 1,
-  total_participants_allowed: 15,
-  indexer_config_id: "governance_quest",
-  deployer_account_id: "election.ndctools.near",
+  questType: "NFT",
+  startTime: 1694700077000,
+  endTime: 1695018482000,
+  rewardAmount: 1,
+  totalParticipantsAllowed: 15,
+  indexerConfigId: "governance_quest",
+  deployerAccountId: "election.ndctools.near",
 };
 
 const mockedQuests = {
@@ -168,12 +168,12 @@ function readableDate(timestamp) {
   return a.toDateString() + " " + a.toLocaleTimeString();
 }
 
-const start_timestamp = readableDate(quest.start_time);
-const end_timestamp = readableDate(quest.end_time);
+const startTimestamp = readableDate(quest.startTime);
+const endTimestamp = readableDate(quest.endTime);
 
-const is_quest_expired = quest.end_time < Date.now() * 1000000;
-const is_quest_active = quest.start_time < Date.now() * 1000000;
-const is_quest_upcoming = quest.start_time > Date.now() * 1000000;
+const is_quest_expired = quest.endTime < Date.now() * 1000000;
+const is_quest_active = quest.startTime < Date.now() * 1000000;
+const is_quest_upcoming = quest.startTime > Date.now() * 1000000;
 
 const quest_status = () => {
   if (is_quest_expired) {
@@ -204,7 +204,7 @@ const header = (
       <div class="row justify-content-between">
         <div class="col-4">
           {widget("components.molecule.profile-card", {
-            accountId: quest.deployer_account_id,
+            accountId: quest.deployerAccountId,
           })}
         </div>
         <div class="col-5">
@@ -245,19 +245,19 @@ const questExtra = (
   <div key="quest-extra">
     <h6>
       <a class="text-muted" href={editUrl}>
-        Live Indexer: Dataplatform.near/{quest.indexer_config_id}
+        Live Indexer: Dataplatform.near/{quest.indexerConfigId}
       </a>
     </h6>
     <h6 class="card-subtitle mb-2 text-muted">
-      Reward amount: {quest.reward_amount} {tokenResolver(quest.quest_type)}
+      Reward amount: {quest.rewardAmount} {tokenResolver(quest.questType)}
     </h6>
     <h6 class="card-subtitle mb-2 text-muted">
-      Total Participants Allowed: {quest.total_participants_allowed}
+      Total Participants Allowed: {quest.totalParticipantsAllowed}
     </h6>
     <h6 class="card-subtitle mb-2 text-muted">
-      Quest Starts {start_timestamp}
+      Quest Starts {startTimestamp}
     </h6>
-    <h6 class="card-subtitle mb-2 text-muted">Quest Ends {end_timestamp}</h6>
+    <h6 class="card-subtitle mb-2 text-muted">Quest Ends {endTimestamp}</h6>
   </div>
 );
 
@@ -335,11 +335,11 @@ const timestampElement = (quest) => {
       class="text-muted"
       href={href("Quest", {
         id: quest.questId,
-        timestamp: quest.start_time,
+        timestamp: quest.startTime,
       })}
     >
-      Starts: {readableDate(quest.start_time).substring(4)}
-      Ends: {readableDate(quest.end_time).substring(4)}
+      Starts: {readableDate(quest.startTime).substring(4)}
+      Ends: {readableDate(quest.endTime).substring(4)}
       <Widget
         src="mob.near/widget/ProfileImage"
         props={{
@@ -536,7 +536,7 @@ const emptyIcons = {
   Reply: "bi-reply",
 };
 
-// <i class={`bi ${emptyIcons[quest.quest_type]}`}> </i>
+// <i class={`bi ${emptyIcons[quest.questType]}`}> </i>
 const questTitle =
   quest.quest_order != 1 ? (
     <div key="post-title"></div>

@@ -143,35 +143,5 @@ return (
         </a>
       ))}
     </Faces>
-    {numLikes > 0 ? (
-      <OverlayTrigger
-        placement="auto"
-        overlay={
-          <Tooltip>
-            <div
-              className="text-truncate text-start"
-              style={{ maxWidth: "16em" }}
-            >
-              {faces.slice(0, 10).map((accountId, i) => (
-                <Fragment key={i}>
-                  <Widget
-                    src="mob.near/widget/ProfileLine"
-                    props={{ accountId, link: false }}
-                  />
-                  <br />
-                </Fragment>
-              ))}
-              {faces.length > 10 ? "..." : ""}
-            </div>
-          </Tooltip>
-        }
-      >
-        <span className="ms-1">
-          and {numLikes} other{numLikes === 1 ? "" : "s"}
-        </span>
-      </OverlayTrigger>
-    ) : (
-      ""
-    )}
   </>
 );

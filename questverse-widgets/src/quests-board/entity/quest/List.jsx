@@ -54,9 +54,9 @@ function defaultRenderItem(questId, additionalProps) {
   return (
     <div className="py-2" style={{ minHeight: "150px" }}>
       {widget(
-        `entity.quest.Quest`,
+        `entity.quest.Card`,
         {
-          id: questId,
+          questId: questId,
           ...additionalProps,
         },
         questId
