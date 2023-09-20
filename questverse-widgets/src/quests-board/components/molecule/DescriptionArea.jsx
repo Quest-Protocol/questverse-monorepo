@@ -1,7 +1,7 @@
 const description = props.description || "";
 
 State.init({
-  showAll: false,
+  showAll: true,
 });
 
 const Elipsiss = styled.b`
@@ -45,7 +45,7 @@ const TextArea = styled.div`
   height: ${({ wrap }) => (wrap ? "unset" : "1.5em")};
 
   p {
-    max-width: 20ch;
+    max-width: 40ch;
     font-weight: 500;
   }
 `;

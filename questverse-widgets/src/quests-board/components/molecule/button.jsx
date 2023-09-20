@@ -106,7 +106,6 @@ const Struct = {
 const styles = `
   padding: 0.5rem 1.2rem !important;
   min-height: 42;
-  line-height: 1.5;
   text-decoration: none !important;
 
   &:not(.shadow-none) {

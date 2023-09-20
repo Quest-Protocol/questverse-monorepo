@@ -5,8 +5,8 @@ const large = props.large ?? true;
 
 const creatorQuest = {
   id: 823740323,
-  title: "Creator Quest",
-  description: "Publish at least 3 widgets",
+  title: "Creator Quest: Create BOS components!",
+  description: "Publish at least 3 widgets on the BOS",
   imageUrl: "Publish at least 3 widgets",
   questType: "Native",
   startTime: 1695018482000,
@@ -18,13 +18,15 @@ const creatorQuest = {
   status: "Active",
   tags: ["onboarding", "developer"],
   signUps: ["roshaan.near"],
+  completed: ["roshaan.near"],
 };
 
 const composerQuest = {
   id: 873740323,
   quest_order: 1,
-  title: "Composer Quest",
-  description: "Compose Two or more components together into one",
+  title: "Composer Quest - Use another users BOS component in your frontend!",
+  description:
+    "Compose Two or more components. Caveat is that you need use another user's component in your app. Please fill out all the metadata category for your app to qualify for the quest.",
   questType: "Native",
   startTime: 1695018482000,
   endTime: 1695018482000,
@@ -35,12 +37,13 @@ const composerQuest = {
   status: "Expired",
   tags: ["onboarding", "developer"],
   signUps: ["roshaan.near", "nearlymartin.near"],
+  completed: ["roshaan.near"],
 };
 
 const contractorQuest = {
   id: 893740323,
   quest_order: 1,
-  title: "Contractor Quest",
+  title: "Contractor Quest - Can you deploy a smart contract?",
   description: "Deploy a smart contract and be a BOS developer",
   questType: "Native",
   startTime: 1695018482000,
@@ -52,13 +55,14 @@ const contractorQuest = {
   status: "Expired",
   tags: ["onboarding", "developer"],
   signUps: ["roshaan.near"],
+  completed: ["roshaan.near"],
 };
 
 const governanceQuest = {
   id: 813740323,
   quest_order: 1,
-  title: "Near NDC",
-  description: "Join a Dao & Vote on a proposal.",
+  title: "Learn to engage with on-chain Governance",
+  description: "Join a Dao & Vote on a proposal created by someone else",
   questType: "NFT",
   startTime: 1694700077000,
   endTime: 1695018482000,
@@ -69,6 +73,7 @@ const governanceQuest = {
   status: "Upcoming",
   tags: ["onboarding", "developer"],
   signUps: ["roshaan.near", "nearlymartin.near", "plugrel.near"],
+  completed: ["roshaan.near"],
 };
 
 const mockedQuests = {
@@ -131,7 +136,7 @@ const Title = styled.h3`
 
 const Text = styled.span`
   display: inline-block;
-  width: 100px;
+  width: 120px;
   font-style: normal;
   font-weight: 600;
   font-size: 1em;
@@ -354,7 +359,7 @@ const footer = (
   <Footer>
     <div class="row" key="buttons-footer">
       <div class="col-8">
-        <Text>Signed Up</Text>
+        <Text>Sign Ups ({state.quest.signUps.length || 0})</Text>
         <div class="btn-group" role="group" aria-label="Basic outlined example">
           <ButtonWithHover
             type="button"
@@ -365,6 +370,22 @@ const footer = (
             <Widget
               src={`${ownerId}/widget/quests-board.components.layout.LikeButton.Faces`}
               props={{ userSignUps: state.quest.signUps }}
+            />
+          </ButtonWithHover>
+        </div>
+      </div>
+      <div class="col-8">
+        <Text> Finished By ({state.quest.completed.length || 0})</Text>
+        <div class="btn-group" role="group" aria-label="Basic outlined example">
+          <ButtonWithHover
+            type="button"
+            class="btn"
+            style={{ border: "0px", marginLeft: "2px" }}
+            onClick={onSignUp}
+          >
+            <Widget
+              src={`${ownerId}/widget/quests-board.components.layout.LikeButton.Faces`}
+              props={{ userSignUps: state.quest.completed }}
             />
           </ButtonWithHover>
         </div>
