@@ -17,6 +17,7 @@ test.beforeEach(async (t) => {
   // Deploy contract
   const root = worker.rootAccount;
 
+  console.log("starting")
     // Deploy the keypom contract.
     const keypom = await root.devDeploy(path.join(__dirname, '../ext-wasm/keypom.wasm'));
     console.log("deployed keypom!")
@@ -48,3 +49,16 @@ test('create a simple near quest', async (t) => {
   t.is("hi", "hi")
 });
 
+test('can redeem aaa quest', async (t) => {
+  const {  root, keypom, questVerse, rosh, morgs  } = t.context.accounts;
+
+  // Create a quest
+  //
+  //
+  // Check Quest Creation
+  // questVerse.get(quest_id)
+  //
+  //
+
+  t.is("hi", "hi")
+});
