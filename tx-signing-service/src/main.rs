@@ -22,7 +22,6 @@ struct ClaimReceiptResponse {
     claim_data: QuestValidationInfo,
 }
 
-
 async fn validate_quest(info: QuestValidationInfo) -> Result<impl warp::Reply, Infallible> {
     println!("info: {:?}", info);
     Ok(warp::reply::json(&ValidationResponse {
