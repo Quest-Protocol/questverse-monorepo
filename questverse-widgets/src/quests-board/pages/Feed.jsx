@@ -21,6 +21,7 @@ function widget(widgetName, widgetProps, key) {
       props={widgetProps}
       key={key}
     />
+
   );
 }
 
