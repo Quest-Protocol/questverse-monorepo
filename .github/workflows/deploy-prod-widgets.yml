@@ -3,7 +3,7 @@ on:
   push:
     branches: [widgets-ci-cd]
     paths:
-      - "questverse-widgets/**"
+      - "questverse-widgets/src/**"
 jobs:
   deploy-mainnet:
     uses: ./.github/workflows/deploy-widgets.yml
