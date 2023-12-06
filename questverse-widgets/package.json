@@ -10,7 +10,7 @@
     "fmt": "prettier --write '**/*.{js,jsx,ts,tsx,json}'",
     "fmt:check": "prettier --check '**/*.{js,jsx,ts,tsx,json}'",
     "build": "npm run fmt && node ./module/include.js",
-    "dev": "~/.cargo/bin/bos-loader quests.near --path src"
+    "dev": "~/.cargo/bin/bos-loader --path src -r replacements.mainnet.json bos.questsverse.near"
   },
   "repository": {
     "type": "git",
