@@ -4,13 +4,14 @@
   "description": "QuestVerse widgets for NEAR Social",
   "devDependencies": {
     "prettier": "^2.8.4",
-    "replace-in-files": "^3.0.0"
+    "replace-in-files": "^3.0.0",
+    "bos-workspace": "git+https://github.com/NEARBuilders/bos-workspace#main"
   },
   "scripts": {
     "fmt": "prettier --write '**/*.{js,jsx,ts,tsx,json}'",
     "fmt:check": "prettier --check '**/*.{js,jsx,ts,tsx,json}'",
-    "build": "npm run fmt && node ./module/include.js",
-    "dev": "~/.cargo/bin/bos-loader --path src -r replacements.mainnet.json bos.questsverse.near"
+    "bosworkspace": "bos-workspace",
+    "dev": "npm run bosworkspace dev"
   },
   "repository": {
     "type": "git",
