@@ -1,11 +1,11 @@
+use near_crypto::{InMemorySigner, SecretKey, Signature, Signer};
+use near_primitives::types::AccountId;
 use serde::{Deserialize, Serialize};
 use std::convert::Infallible;
 use std::env;
 use std::error::Error;
 use std::fmt::Debug;
 use std::str::FromStr;
-use near_crypto::{InMemorySigner, SecretKey, Signature, Signer};
-use near_primitives::types::AccountId;
 use warp::Filter;
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -26,13 +26,12 @@ struct ClaimReceiptResponse {
     claim_data: QuestValidationInfo,
 }
 fn sign_claim(payload: &[u8]) -> Result<Signature, Box<dyn Error>> {
-    let secret_key = env::var("SECRET KEY")
-        .expect("SECRET_KEY must be set up in the environment");
+    let secret_key = env::var("SECRET KEY").expect("SECRET_KEY must be set up in the environment");
     let secret_key = SecretKey::from_str(&secret_key)?;
 
     let account_id = AccountId::from_str("example-acct-id").expect("Invalid account ID format");
 
-    let signer = InMemorySigner::from_secret_key( account_id, secret_key);
+    let signer = InMemorySigner::from_secret_key(account_id, secret_key);
 
     Ok(signer.sign(payload))
 }
@@ -61,23 +60,18 @@ async fn generate_claim_receipt(info: QuestValidationInfo) -> Result<impl warp::
 #[tokio::main]
 async fn main() {
     let validate = warp::path!("v1" / "validate" / String / String)
-        .map(
-            |account_id, quest_id| QuestValidationInfo {
-                account_id,
-                quest_id
-            },
-        )
+        .map(|account_id, quest_id| QuestValidationInfo {
+            account_id,
+            quest_id,
+        })
         .and_then(validate_quest);
 
-    let generate_claim_receipt =
-        warp::path!("v1" / "generate_claim_receipt" / String / String)
-            .map(
-                |account_id, quest_id| QuestValidationInfo {
-                    account_id,
-                    quest_id
-                },
-            )
-            .and_then(generate_claim_receipt);
+    let generate_claim_receipt = warp::path!("v1" / "generate_claim_receipt" / String / String)
+        .map(|account_id, quest_id| QuestValidationInfo {
+            account_id,
+            quest_id,
+        })
+        .and_then(generate_claim_receipt);
     let routes = validate.or(generate_claim_receipt);
 
     warp::serve(routes).run(([127, 0, 0, 1], 8080)).await;
