@@ -47,6 +47,7 @@ function href(widgetName, linkProps) {
 
   return `/#/${nearQuestVerseWidgetsAccountId}/widget/quests-board.pages.${widgetName}${
     linkPropsQuery ? "?" : ""
+
   }${linkPropsQuery}`;
 }
 /* END_INCLUDE: "common.jsx" */
