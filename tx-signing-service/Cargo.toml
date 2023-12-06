@@ -11,3 +11,7 @@ serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 near-crypto = "0.17.0"
 near-primitives = "0.17.0"
+
+
+[dev-dependencies]
+dotenv = "0.15.0"

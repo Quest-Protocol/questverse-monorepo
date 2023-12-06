@@ -1,12 +1,8 @@
-use near_crypto::{InMemorySigner, SecretKey, Signature, Signer};
-use near_primitives::types::AccountId;
 use serde::{Deserialize, Serialize};
 use std::convert::Infallible;
-use std::env;
-use std::error::Error;
 use std::fmt::Debug;
-use std::str::FromStr;
 use warp::Filter;
+mod internal;
 
 #[derive(Deserialize, Serialize, Debug)]
 struct QuestValidationInfo {
@@ -25,17 +21,7 @@ struct ClaimReceiptResponse {
     signed_receipt: String,
     claim_data: QuestValidationInfo,
 }
-fn sign_claim(payload: &[u8]) -> Result<Signature, Box<dyn Error>> {
-    let secret_key = env::var("SECRET KEY").expect("SECRET_KEY must be set up in the environment");
-    let secret_key = SecretKey::from_str(&secret_key)?;
 
-    let account_id = env::var("ACCOUNT ID").unwrap_or("v1.questverse.near".to_string());
-    let account_id = AccountId::from_str(&account_id)?;
-
-    let signer = InMemorySigner::from_secret_key(account_id, secret_key);
-
-    Ok(signer.sign(payload))
-}
 
 async fn validate_quest(info: QuestValidationInfo) -> Result<impl warp::Reply, Infallible> {
     println!("info: {:?}", info);
@@ -47,7 +33,7 @@ async fn validate_quest(info: QuestValidationInfo) -> Result<impl warp::Reply, I
 
 async fn generate_claim_receipt(info: QuestValidationInfo) -> Result<impl warp::Reply, Infallible> {
     println!("info: {:?}", info);
-    let signed_tx = "example_signed_tx".to_string();
+    let _signed_tx = "example_signed_tx".to_string();
 
     Ok(warp::reply::json(&ClaimReceiptResponse {
         signed_receipt: "".to_string(),
