@@ -29,7 +29,8 @@ fn sign_claim(payload: &[u8]) -> Result<Signature, Box<dyn Error>> {
     let secret_key = env::var("SECRET KEY").expect("SECRET_KEY must be set up in the environment");
     let secret_key = SecretKey::from_str(&secret_key)?;
 
-    let account_id = AccountId::from_str("example-acct-id").expect("Invalid account ID format");
+    let account_id = env::var("ACCOUNT ID").unwrap_or("v1.questverse.near".to_string());
+    let account_id = AccountId::from_str(&account_id)?;
 
     let signer = InMemorySigner::from_secret_key(account_id, secret_key);
 
