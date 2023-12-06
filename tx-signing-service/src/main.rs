@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::convert::Infallible;
 use std::fmt::Debug;
 use warp::Filter;
+mod internal;
 
 #[derive(Deserialize, Serialize, Debug)]
 struct QuestValidationInfo {
@@ -31,7 +32,7 @@ async fn validate_quest(info: QuestValidationInfo) -> Result<impl warp::Reply, I
 
 async fn generate_claim_receipt(info: QuestValidationInfo) -> Result<impl warp::Reply, Infallible> {
     println!("info: {:?}", info);
-    let signed_tx = "example_signed_tx".to_string();
+    let _signed_tx = "example_signed_tx".to_string();
 
     Ok(warp::reply::json(&ClaimReceiptResponse {
         signed_receipt: "".to_string(),
@@ -45,23 +46,18 @@ async fn generate_claim_receipt(info: QuestValidationInfo) -> Result<impl warp::
 #[tokio::main]
 async fn main() {
     let validate = warp::path!("v1" / "validate" / String / String)
-        .map(
-            |account_id, quest_id| QuestValidationInfo {
-                account_id,
-                quest_id
-            },
-        )
+        .map(|account_id, quest_id| QuestValidationInfo {
+            account_id,
+            quest_id,
+        })
         .and_then(validate_quest);
 
-    let generate_claim_receipt =
-        warp::path!("v1" / "generate_claim_receipt" / String / String)
-            .map(
-                |account_id, quest_id| QuestValidationInfo {
-                    account_id,
-                    quest_id
-                },
-            )
-            .and_then(generate_claim_receipt);
+    let generate_claim_receipt = warp::path!("v1" / "generate_claim_receipt" / String / String)
+        .map(|account_id, quest_id| QuestValidationInfo {
+            account_id,
+            quest_id,
+        })
+        .and_then(generate_claim_receipt);
     let routes = validate.or(generate_claim_receipt);
 
     warp::serve(routes).run(([127, 0, 0, 1], 8080)).await;
