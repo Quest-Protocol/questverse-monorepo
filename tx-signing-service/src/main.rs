@@ -7,7 +7,6 @@ use warp::Filter;
 struct QuestValidationInfo {
     account_id: String,
     quest_id: String,
-    indexer_function: String,
 }
 
 #[derive(Serialize, Debug)]
@@ -18,8 +17,8 @@ struct ValidationResponse {
 
 #[derive(Serialize, Debug)]
 struct ClaimReceiptResponse {
-    receipt: String,
-    data: QuestValidationInfo,
+    signed_receipt: String,
+    claim_data: QuestValidationInfo,
 }
 
 async fn validate_quest(info: QuestValidationInfo) -> Result<impl warp::Reply, Infallible> {
@@ -35,34 +34,31 @@ async fn generate_claim_receipt(info: QuestValidationInfo) -> Result<impl warp::
     let signed_tx = "example_signed_tx".to_string();
 
     Ok(warp::reply::json(&ClaimReceiptResponse {
-        receipt: "".to_string(),
-        data: QuestValidationInfo {
+        signed_receipt: "".to_string(),
+        claim_data: QuestValidationInfo {
             account_id: "".to_string(),
             quest_id: "".to_string(),
-            indexer_function: "".to_string(),
         },
     }))
 }
 
 #[tokio::main]
 async fn main() {
-    let validate = warp::path!("v1" / "validate" / String / String / String)
+    let validate = warp::path!("v1" / "validate" / String / String)
         .map(
-            |account_id, quest_id, indexer_function| QuestValidationInfo {
+            |account_id, quest_id| QuestValidationInfo {
                 account_id,
-                quest_id,
-                indexer_function,
+                quest_id
             },
         )
         .and_then(validate_quest);
 
     let generate_claim_receipt =
-        warp::path!("v1" / "generate_claim_receipt" / String / String / String)
+        warp::path!("v1" / "generate_claim_receipt" / String / String)
             .map(
-                |account_id, quest_id, indexer_function| QuestValidationInfo {
+                |account_id, quest_id| QuestValidationInfo {
                     account_id,
-                    quest_id,
-                    indexer_function,
+                    quest_id
                 },
             )
             .and_then(generate_claim_receipt);
