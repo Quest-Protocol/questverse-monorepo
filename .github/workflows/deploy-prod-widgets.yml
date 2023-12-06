@@ -1,7 +1,7 @@
 name: Deploy Prod Components to Mainnet
 on:
   push:
-    branches: [widgets-ci-cd]
+    branches: [main]
     paths:
       - "questverse-widgets/src/**"
 jobs:
