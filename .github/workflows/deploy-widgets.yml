@@ -46,7 +46,7 @@ jobs:
         id: set_replacements
         run: |
           cd "questverse-widgets/"
-          echo "replacements=$(jq -r '[to_entries[] | .["find"] = "${" + .key + "}" | .["replace"] = .value | del(.key, .value)]' ../replacements.${ENVIRONMENT}.json | tr -d "\n\r")" >> $GITHUB_OUTPUT
+          echo "replacements=$(jq -r '[to_entries[] | .["find"] = "${" + .key + "}" | .["replace"] = .value | del(.key, .value)]' replacements.${ENVIRONMENT}.json | tr -d "\n\r")" >> $GITHUB_OUTPUT
 
       - name: Replace placeholders
         uses: flcdrg/replace-multiple-action@v1
