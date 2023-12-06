@@ -62,6 +62,7 @@ jobs:
 
       - name: Deploy widgets
         run: |
-          cd "$DIRECTORY_PATH"
+          echo $DIRECTORY_PATH
+          cd $DIRECTORY_PATH
+          echo "$BOS_DEPLOY_ACCOUNT_ID"
           bos components deploy "$BOS_DEPLOY_ACCOUNT_ID" sign-as "$BOS_DEPLOY_ACCOUNT_ID" network-config mainnet sign-with-plaintext-private-key --signer-public-key "$BOS_SIGNER_PUBLIC_KEY" --signer-private-key "$BOS_SIGNER_PRIVATE_KEY" send
-          cd -
