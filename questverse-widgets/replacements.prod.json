@@ -1,6 +1,0 @@
-{
-    "REPL_ACCOUNT_ID": "bos.questverse.near",
-    "REPL_QUESTVERSE_CONTRACT": "v1.questverse.near",
-    "REPL_QUERYAPI_CONTRACT": "queryapi.dataplatform.near",
-    "REPL_API_SIGNER_SERVICE": "https://"
-}
