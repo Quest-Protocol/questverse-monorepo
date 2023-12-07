@@ -132,7 +132,7 @@ mod tests {
             signature.is_ok(),
             "sign_claim should succeed with default account ID"
         );
-
+      
         let signature = signature.unwrap();
 
         let secret_key =
@@ -142,7 +142,7 @@ mod tests {
         let signer = InMemorySigner::from_secret_key(account_id, secret_key);
 
         let is_valid = signer.verify(&payload, &signature);
-
-        //assert!(is_valid, "The signature should be valid");
+      
+        assert!(is_valid, "The signature should be valid");
     }
 }
