@@ -43,7 +43,6 @@ enum QuestStateError {
     InvalidHeaderValueError(#[from] InvalidHeaderValue),
 }
 
-
 #[derive(Serialize, Deserialize)]
 struct QuestPayload {
     account_id: String,
@@ -54,6 +53,13 @@ struct QuestPayload {
 struct QuestValidationInfo {
     account_id: String,
     quest_id: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+struct QuestValidationRequest {
+    account_id: String,
+    quest_id: String,
+    indexer_config_id: String,
 }
 
 #[derive(Serialize, Debug)]
@@ -76,7 +82,9 @@ async fn validate_quest(info: QuestValidationInfo) -> Result<impl warp::Reply, I
     }))
 }
 
-async fn generate_claim_receipt(info: QuestValidationInfo) -> Result<impl warp::Reply, Infallible> {
+async fn generate_claim_receipt(
+    info: QuestValidationRequest,
+) -> Result<impl warp::Reply, Infallible> {
     println!("info: {:?}", info);
     let _signed_tx = "example_signed_tx".to_string();
 
@@ -98,12 +106,16 @@ async fn main() {
         })
         .and_then(validate_quest);
 
-    let generate_claim_receipt = warp::path!("v1" / "generate_claim_receipt" / String / String)
-        .map(|account_id, quest_id| QuestValidationInfo {
-            account_id,
-            quest_id,
-        })
-        .and_then(generate_claim_receipt);
+    let generate_claim_receipt =
+        warp::path!("v1" / "generate_claim_receipt" / String / String / String)
+            .map(
+                |account_id, quest_id, indexer_config_id| QuestValidationRequest {
+                    account_id,
+                    quest_id,
+                    indexer_config_id,
+                },
+            )
+            .and_then(generate_claim_receipt);
     let routes = validate.or(generate_claim_receipt);
 
     warp::serve(routes).run(([127, 0, 0, 1], 8080)).await;
