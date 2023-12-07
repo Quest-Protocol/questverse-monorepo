@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v2
       
       - name: Deploy using bos-workspace
-        uses: nearbuilders/bos-workspace/.github/workflows/deploy.yml@feat/git-workflows
+        uses: nearbuilders/bos-workspace/.github/workflows/deploy.yml@main
         with:
           deploy-env: "mainnet"
           app-name: "QuestVerse"
