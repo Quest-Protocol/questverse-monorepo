@@ -3,8 +3,6 @@ name: Deploy 'QuestVerse' App Components to Mainnet
 on:
   push:
     branches: [main]
-    paths:
-      - "./questverse-widgets/apps/QuestVerse/**"
 
 jobs:
   deploy-mainnet:
