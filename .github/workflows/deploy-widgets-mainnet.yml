@@ -16,4 +16,5 @@ jobs:
       deploy-account-address: ${{ vars.DEPLOY_ACCOUNT_ID }} 
       signer-account-address: ${{ vars.SIGNER_ACCOUNT_ID }}
       signer-public-key: ${{ vars.SIGNER_PUBLIC_KEY }}
-      signer-private-key: ${{ secrets.SIGNER_PRIVATE_KEY }}
+    secrets: 
+      SIGNER_PRIVATE_KEY: ${{ secrets.SIGNER_PRIVATE_KEY }}
