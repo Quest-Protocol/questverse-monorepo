@@ -1,42 +1,10 @@
-use std::error::Error;
-use near_crypto::Signature;
-use crate::{QuestValidationInfo};
-use reqwest::{Client, Error as ReqwestError, header::HeaderMap};
-use reqwest::header::HeaderValue;
-use serde::{Deserialize, Serialize};
+use std::env;
+use crate::{QuestConditionQuery, QuestState, QuestStateError, QuestValidationInfo};
+use reqwest::{Client, header::HeaderMap};
+use reqwest::header::{HeaderValue};
 use serde_json::{json, Value};
-use thiserror::Error;
 use crate::internal::sign_claim;
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
-struct QuestConditionQuery {
-    account_id: String,
-    block_height: u64,
-    is_completed: bool,
-}
-
-enum QuestState {
-    Completed(
-        String,
-        Signature
-    ),
-    NotCompleted(
-        String,
-        QuestConditionQuery,
-    )
-}
-
-#[derive(Debug, Error)]
-enum QuestStateError {
-    #[error("Request failed: {0}")]
-    ReqwestError(#[from] ReqwestError),
-
-    #[error("Query not found")]
-    QueryNotFound,
-
-    #[error("Claim error: {0}")]
-    ClaimError(Box<dyn Error>),
-}
+use dotenv::dotenv;
 
 fn build_table_name(indexer_config_id: &str) -> String {
     indexer_config_id.replace(".", "_").replace("/", "_") + "_quest_tracker"
@@ -56,12 +24,17 @@ fn build_query(table_name: &str, account_id: &str) -> String {
 }
 
 async fn fetch_response(query: String) -> Result<Value, QuestStateError> {
+    dotenv().ok();
+
+    let query_api_url = env::var("QUERY_API").expect("QUERY_API not found in .env file");
+    let header_role = env::var("HEADER_ROLE").expect("HEADER_ROLE not found in .env file");
+
     let client = Client::new();
     let mut headers = HeaderMap::new();
-    headers.insert("x-hasura-role", HeaderValue::from_static("roshaan_near"));
+    headers.insert("x-hasura-role", HeaderValue::from_str(&header_role)?);
 
     let res = client
-        .post("https://near-queryapi.api.pagoda.co/v1/graphql")
+        .post(&query_api_url)
         .headers(headers)
         .json(&json!({ "query": query }))
         .send()
@@ -73,9 +46,8 @@ async fn fetch_response(query: String) -> Result<Value, QuestStateError> {
 
 
 /// given an indexer_config_id, `check_quest` queries the graphql client to check a quest's condition
-///
-pub(crate) async fn check_quest(indexer_config_id: String, info: QuestValidationInfo) -> Result<QuestState, QuestStateError> {
-    let table_name = build_table_name(&indexer_config_id);
+pub(crate) async fn check_quest(indexer_config_id: &str, info: &QuestValidationInfo) -> Result<QuestState, QuestStateError> {
+    let table_name = build_table_name(indexer_config_id);
     let query = build_query(&table_name, &info.account_id);
 
     let response_body = fetch_response(query).await?;
@@ -121,32 +93,90 @@ pub(crate) async fn check_quest(indexer_config_id: String, info: QuestValidation
 
 #[cfg(test)]
 mod tests {
+    use std::path::Path;
     use super::*;
     use tokio::test as tokio_test;
 
-    #[test]
-    fn test_build_query() {
-        let cases = [
-            ("roshaan.near/quest_dao_join_quest", "roshaan_near_quest_dao_join_quest_quest_tracker")
-        ];
+    const GREEN_TABLE: (&str, &str) = ("roshaan.near/quest_dao_join_quest", "roshaan_near_quest_dao_join_quest_quest_tracker");
+    const MOCK_TABLE: &str = GREEN_TABLE.1;
 
-        assert!(cases
-            .into_iter()
-            .all(|(config_id, table_name)| {
-                table_name == build_table_name(config_id)
-            }))
+    fn setup() {
+        let dotenv_path = Path::new(".env.test");
+        dotenv::from_path(dotenv_path).ok();
+    }
+
+    fn mock_invalid_info() -> QuestValidationInfo {
+        QuestValidationInfo {
+            account_id: "erika.near".to_string(),
+            quest_id: "47747".to_string(),
+        }
+    }
+
+    fn mock_valid_info() ->  [(QuestValidationInfo, bool); 2] {
+        let mock_completed_quest_info: QuestValidationInfo = QuestValidationInfo {
+            account_id: String::from("roshaan.near"),
+            quest_id: "23233".to_string(),
+        };
+        let mock_incomplete_quest_info: QuestValidationInfo = QuestValidationInfo {
+            account_id: "matt.near".to_string(),
+            quest_id: "47334".to_string(),
+        };
+
+        [
+            (mock_incomplete_quest_info, false),
+            (mock_completed_quest_info, true),
+        ]
+    }
+
+    #[test]
+    fn test_build_table() {
+        assert_eq!(build_table_name(GREEN_TABLE.0), GREEN_TABLE.1);
     }
 
     #[tokio_test]
-    async fn test_check_quest() {
-        let indexer_config = "roshaan.near/quest_dao_join_quest".to_string();
-        let info = QuestValidationInfo {
-            account_id: "roshaan.near".to_string(),
-            quest_id: "23233".to_string(),
-        };
+    async fn test_fetch_response_valid_query() {
+        dotenv().ok();
 
-        let result = check_quest(indexer_config, info).await;
-        assert!(result.is_ok(), "Error checking quest: {:?}", result.err());
+        let valid_info = &mock_valid_info()[0].0;
+
+        let query = build_query(MOCK_TABLE, &valid_info.account_id);
+        let result = fetch_response(query).await;
+
+        assert!(result.is_ok());
     }
 
+    #[tokio_test]
+    async fn test_empty_quest_err() {
+        let empty_info = mock_invalid_info();
+
+        let result = check_quest(GREEN_TABLE.0, &empty_info).await;
+
+        assert!(result.is_err());
+
+        match result {
+            Err(QuestStateError::QueryNotFound) => {},
+            _ => panic!("Quest should err as it is empty")
+        }
+
+    }
+
+
+    #[tokio_test]
+    async fn test_check_quest() {
+        setup();
+
+        let mock_infos = mock_valid_info();
+
+        for (info, completed_status) in mock_infos {
+            let result = check_quest(GREEN_TABLE.0, &info).await;
+
+            assert!(result.is_ok(), "Error checking quest: {:?}", result.err());
+
+            match result.unwrap() {
+                QuestState::Completed(_, _) if completed_status => {}, // If completed_status is true, expect Completed
+                QuestState::NotCompleted(_, _) if !completed_status => {}, // If completed_status is false, expect NotCompleted
+                _ => panic!("Quest state does not match expected completed status"),
+            }
+        }
+    }
 }

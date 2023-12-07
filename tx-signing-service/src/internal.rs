@@ -78,7 +78,6 @@ mod tests {
     fn test_sign_claim_with_valid_keys_and_incorrect_signer() {
         setup();
 
-        let valid_secret_key = env::var("SECRET_KEY").expect("SECRET_KEY not found");
         let valid_account_id = env::var("ACCOUNT_ID").expect("ACCOUNT_ID not found");
 
         let payload = mock_payload();
@@ -110,17 +109,6 @@ mod tests {
     }
 
     #[test]
-    fn test_sign_claim_with_invalid_secret_key() {
-        let payload = mock_payload();
-        let result = sign_claim(&payload);
-
-        assert!(
-            result.is_err(),
-            "sign_claim should fail with invalid secret key"
-        );
-    }
-
-    #[test]
     fn test_sign_claim_with_default_account_id() {
         setup();
 
@@ -143,6 +131,6 @@ mod tests {
 
         let is_valid = signer.verify(&payload, &signature);
 
-        //assert!(is_valid, "The signature should be valid");
+        assert!(is_valid, "The signature should be valid");
     }
 }

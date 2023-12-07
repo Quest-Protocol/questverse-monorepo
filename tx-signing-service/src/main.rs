@@ -1,10 +1,48 @@
 use serde::{Deserialize, Serialize};
 use std::convert::Infallible;
+use std::error::Error;
 use std::fmt::Debug;
+use reqwest::{header::InvalidHeaderValue, Error as ReqwestError};
+use thiserror::Error;
 use warp::Filter;
+use near_crypto::Signature;
 
 mod internal;
 mod graphql_service;
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+struct QuestConditionQuery {
+    account_id: String,
+    block_height: u64,
+    is_completed: bool,
+}
+
+enum QuestState {
+    Completed(
+        String,
+        Signature
+    ),
+    NotCompleted(
+        String,
+        QuestConditionQuery,
+    )
+}
+
+#[derive(Debug, Error)]
+enum QuestStateError {
+    #[error("Request failed: {0}")]
+    ReqwestError(#[from] ReqwestError),
+
+    #[error("Query not found")]
+    QueryNotFound,
+
+    #[error("Claim error: {0}")]
+    ClaimError(Box<dyn Error>),
+
+    #[error("Invalid header value: {0}")]
+    InvalidHeaderValueError(#[from] InvalidHeaderValue),
+}
+
 
 #[derive(Serialize, Deserialize)]
 struct QuestPayload {
