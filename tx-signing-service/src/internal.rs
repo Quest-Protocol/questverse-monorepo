@@ -120,7 +120,7 @@ mod tests {
             signature.is_ok(),
             "sign_claim should succeed with default account ID"
         );
-
+      
         let signature = signature.unwrap();
 
         let secret_key =
