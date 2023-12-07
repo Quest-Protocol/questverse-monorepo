@@ -9,5 +9,6 @@ return (
     <p>QUESTVERSE_CONTRACT: {QUESTVERSE_CONTRACT}</p>
     <p>QUERYAPI_CONTRACT: {QUERYAPI_CONTRACT}</p>
     <p>API_SIGNER_SERVICE: {API_SIGNER_SERVICE}</p>
+    <Widget src="/*__@appAccount__*//widget/createQuest" />
   </>
 );
