@@ -2,7 +2,15 @@ use serde::{Deserialize, Serialize};
 use std::convert::Infallible;
 use std::fmt::Debug;
 use warp::Filter;
+
 mod internal;
+mod graphql_service;
+
+#[derive(Serialize, Deserialize)]
+struct QuestPayload {
+    account_id: String,
+    quest_id: u64,
+}
 
 #[derive(Deserialize, Serialize, Debug)]
 struct QuestValidationInfo {
