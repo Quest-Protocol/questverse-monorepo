@@ -4,24 +4,17 @@ on:
   push:
     branches: [main]
     paths:
-      - "questverse-widgets/apps/QuestVerse"
+      - "./questverse-widgets/apps/QuestVerse"
 
 jobs:
   deploy-mainnet:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: questverse-widgets
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      
-      - name: Deploy using bos-workspace
-        uses: nearbuilders/bos-workspace/.github/workflows/deploy.yml@main
-        with:
-          deploy-env: "mainnet"
-          app-name: "QuestVerse"
-          deploy-account-address: ${{ vars.DEPLOY_ACCOUNT_ID }} 
-          signer-account-address: ${{ vars.SIGNER_ACCOUNT_ID }}
-          signer-public-key: ${{ vars.SIGNER_PUBLIC_KEY }}
-          signer-private-key: ${{ secrets.SIGNER_PRIVATE_KEY }}
+    uses: nearbuilders/bos-workspace/.github/workflows/deploy.yml@feat/git-workflows
+    with:
+      deploy-env: "mainnet"
+      app-name: "QuestVerse"
+      working-directory: "./questverse-widgets"
+      deploy-account-address: ${{ vars.PROD_SIGNER_ACCOUNT_ID }} 
+      signer-account-address: ${{ vars.PROD_SIGNER_ACCOUNT_ID }}
+      signer-public-key: ${{ vars.PROD_SIGNER_PUBLIC_KEY }}
+    secrets: 
+      SIGNER_PRIVATE_KEY: ${{ secrets.PROD_SIGNER_PRIVATE_KEY }}
