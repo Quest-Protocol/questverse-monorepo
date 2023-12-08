@@ -1,5 +1,5 @@
 use std::env;
-use crate::{QuestConditionQuery, QuestState, QuestStateError, QuestValidationInfo};
+use crate::{QuestConditionQuery, QuestState, QuestStateError, QuestValidationInfo, QuestValidationRequest};
 use reqwest::{Client, header::HeaderMap};
 use reqwest::header::{HeaderValue};
 use serde_json::{json, Value};
@@ -46,9 +46,13 @@ async fn fetch_response(query: String) -> Result<Value, QuestStateError> {
 
 
 /// given an indexer_config_id, `check_quest` queries the graphql client to check a quest's condition
-pub(crate) async fn check_quest(indexer_config_id: &str, info: &QuestValidationInfo) -> Result<QuestState, QuestStateError> {
+pub(crate) async fn check_quest(validation_request: &QuestValidationRequest) -> Result<QuestState, QuestStateError> {
+    let indexer_config_id = &validation_request.indexer_config_id;
+    let account_id = &validation_request.account_id;
+    let quest_id = &validation_request.quest_id;
+
     let table_name = build_table_name(indexer_config_id);
-    let query = build_query(&table_name, &info.account_id);
+    let query = build_query(&table_name, account_id);
 
     let response_body = fetch_response(query).await?;
 
@@ -64,7 +68,12 @@ pub(crate) async fn check_quest(indexer_config_id: &str, info: &QuestValidationI
 
     match &quest_snapshot.is_completed {
         true => {
-            let payload= serde_json::to_string(&info)
+            let payload= serde_json::to_string(
+                &QuestValidationInfo {
+                    account_id: account_id.clone(),
+                    quest_id: quest_id.clone(),
+                }
+            )
                 .unwrap()
                 .into_bytes();
 
@@ -148,8 +157,13 @@ mod tests {
     #[tokio_test]
     async fn test_empty_quest_err() {
         let empty_info = mock_invalid_info();
+        let validation_request = QuestValidationRequest {
+            account_id: empty_info.account_id,
+            quest_id: empty_info.quest_id,
+            indexer_config_id: GREEN_TABLE.0.parse().unwrap(),
+        };
 
-        let result = check_quest(GREEN_TABLE.0, &empty_info).await;
+        let result = check_quest(&validation_request).await;
 
         assert!(result.is_err());
 
@@ -168,7 +182,12 @@ mod tests {
         let mock_infos = mock_valid_info();
 
         for (info, completed_status) in mock_infos {
-            let result = check_quest(GREEN_TABLE.0, &info).await;
+            let validation_request = QuestValidationRequest {
+                account_id: info.account_id,
+                quest_id: info.quest_id,
+                indexer_config_id: GREEN_TABLE.0.parse().unwrap(),
+            };
+            let result = check_quest(&validation_request).await;
 
             assert!(result.is_ok(), "Error checking quest: {:?}", result.err());
 

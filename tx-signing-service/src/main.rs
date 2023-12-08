@@ -2,10 +2,12 @@ use serde::{Deserialize, Serialize};
 use std::convert::Infallible;
 use std::error::Error;
 use std::fmt::Debug;
+use std::future::Future;
 use reqwest::{header::InvalidHeaderValue, Error as ReqwestError};
 use thiserror::Error;
 use warp::Filter;
 use near_crypto::Signature;
+use crate::graphql_service::check_quest;
 
 mod internal;
 mod graphql_service;
@@ -70,6 +72,7 @@ struct ValidationResponse {
 
 #[derive(Serialize, Debug)]
 struct ClaimReceiptResponse {
+    message: Option<String>,
     signed_receipt: String,
     claim_data: QuestValidationInfo,
 }
@@ -86,13 +89,26 @@ async fn generate_claim_receipt(
     info: QuestValidationRequest,
 ) -> Result<impl warp::Reply, Infallible> {
     println!("info: {:?}", info);
-    let _signed_tx = "example_signed_tx".to_string();
+
+    let quest_condition = check_quest(&info)?;
+
+    let mut signed_receipt = String::new();
+    let mut message = None;
+    match quest_condition {
+        QuestState::Completed(_, sig) => {
+            signed_receipt = sig.to_string();
+        },
+        QuestState::NotCompleted(msg, condition_query) => {
+            message = Some(msg);
+        }
+    }
 
     Ok(warp::reply::json(&ClaimReceiptResponse {
-        signed_receipt: "".to_string(),
+        message,
+        signed_receipt,
         claim_data: QuestValidationInfo {
-            account_id: "".to_string(),
-            quest_id: "".to_string(),
+            account_id: info.account_id,
+            quest_id: info.quest_id,
         },
     }))
 }
