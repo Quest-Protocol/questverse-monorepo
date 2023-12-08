@@ -1,11 +1,11 @@
 const { fetch_step_one_data } = VM.require(
-  "bos.questverse.near/widget/newQuestComponents.data_stepOne"
+  "bos.questverse.near/widget/data.data_stepOne"
 );
 const { fetch_step_two_data } = VM.require(
-  "bos.questverse.near/widget/newQuestComponents.data_stepTwo"
+  "bos.questverse.near/widget/data.data_stepTwo"
 );
 const { fetch_step_three_data } = VM.require(
-  "bos.questverse.near/widget/newQuestComponents.data_stepThree"
+  "bos.questverse.near/widget/data.data_stepThree"
 );
 const stepOneData = fetch_step_one_data();
 const stepTwoData = fetch_step_two_data();
