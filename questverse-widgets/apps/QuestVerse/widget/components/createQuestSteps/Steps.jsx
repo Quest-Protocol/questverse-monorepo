@@ -2,7 +2,7 @@
 // const { StepOne } = require("bos.questverse.near/newQuestComponents.StepOne");
 
 const { fetch_step_one_data } = VM.require(
-  "bos.questverse.near/widget/data_stepOne"
+  "/*__@appAccount__*//widget/data.data_stepOne"
 );
 const stepOneData = fetch_step_one_data();
 // const {stepOneData, stepTwoData} = VM.require("bos.questverse.near/module/data_all"); I can do it like this
@@ -43,7 +43,7 @@ function renderStep() {
     case 1:
       return (
         <Widget
-          src={"bos.questverse.near/widget/newQuestComponents.stepOne"}
+          src={"/*__@appAccount__*//widget/components.createQuestSteps.stepOne"}
           props={{
             data: stepOneData,
             onNext: handleNext,
@@ -57,7 +57,7 @@ function renderStep() {
     default:
       return (
         <Widget
-          src={"bos.questverse.near/widget/newQuestComponents.stepOne"}
+          src={"/*__@appAccount__*//widget/components.createQuestSteps.stepOne"}
           props={{
             data: stepOneData,
             onNext: handleNext,
@@ -87,16 +87,16 @@ return (
 
 
 /**
- * 
+ *
  * JSON -> Functions w req
- * 
- * 
+ *
+ *
  */
 
 
 
 /**
- * 
- * 
+ *
+ *
  * CREATE QUEST
  */

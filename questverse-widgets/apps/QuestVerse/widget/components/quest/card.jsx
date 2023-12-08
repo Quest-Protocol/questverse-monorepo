@@ -135,7 +135,7 @@ return (
           <b>{JSON.stringify(quest.reward_amount)} NEAR</b>
         </p>
 
-        <Widget src="/*__@appAccount__*//widget/quest.claim" props={{ questId }} />
+        <Widget src="/*__@appAccount__*//widget/components.quest.claim" props={{ questId }} />
         <p className="text-center mt-1">
           <i>{JSON.stringify(quest.total_participants_allowed)} left</i>
         </p>

@@ -191,7 +191,7 @@ return (
         {quests.map((quest) => (
           <div className="m-2">
             <Widget
-              src="/*__@appAccount__*//widget/quest.card"
+              src="/*__@appAccount__*//widget/components.quest.card"
               props={{ questId: quest[0] }}
             />
           </div>

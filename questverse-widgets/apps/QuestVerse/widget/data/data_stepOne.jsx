@@ -1,7 +1,3 @@
-// const TYPES = {
-
-// };
-
 function fetch_step_one_data({}) {
   return {
     project_types: [
