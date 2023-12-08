@@ -9,7 +9,7 @@ use serde_json::{json, Value};
 use std::env;
 
 fn build_table_name(indexer_config_id: &str) -> String {
-    indexer_config_id.replace(".", "_").replace("/", "_") + "_quest_tracker"
+    indexer_config_id.replace(".", "_").replace("%", "_") + "_quest_tracker"
 }
 
 fn build_query(table_name: &str, account_id: &str) -> String {
@@ -105,7 +105,7 @@ mod tests {
     use tokio::test as tokio_test;
 
     const GREEN_TABLE: (&str, &str) = (
-        "roshaan.near/quest_dao_join_quest",
+        "roshaan.near%quest_dao_join_quest",
         "roshaan_near_quest_dao_join_quest_quest_tracker",
     );
     const MOCK_TABLE: &str = GREEN_TABLE.1;
