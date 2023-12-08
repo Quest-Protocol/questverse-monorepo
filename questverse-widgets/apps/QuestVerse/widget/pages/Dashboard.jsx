@@ -164,7 +164,7 @@ return (
   <>
     <div>
       <Header className="d-flex p-3 px-4 align-items-center rounded justify-content-between">
-        <h3 className="mt-2" style={{ fontFamily: "Courier", color: "white" }}>
+  <h3 className="mt-2" style={{ fontFamily: "Helvetica Neue", fontSize: "30px", color: "white" }}>
           <b>QuestVerse</b>
         </h3>
 
@@ -185,7 +185,7 @@ return (
         )}
       </Header>
       <Container className="d-flex row justify-content-between w-100">
-        <h2 className="mb-3" style={{ fontFamily: "Courier" }}>
+        <h2 className="mb-3" style={{ fontFamily: "Helvetica Neue" }}>
           <b>Discover</b>
         </h2>
         {quests.map((quest) => (
