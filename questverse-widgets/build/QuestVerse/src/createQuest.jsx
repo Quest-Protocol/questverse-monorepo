@@ -1,71 +1,110 @@
-// import StepOne from "./StepOne";
-// const { StepOne } = require("bos.questverse.near/newQuestComponents.StepOne");
-
 const { fetch_step_one_data } = VM.require(
-  "bos.questverse.near/widget/data_stepOne"
+  "bos.questverse.near/widget/newQuestComponents.data_stepOne"
+);
+const { fetch_step_two_data } = VM.require(
+  "bos.questverse.near/widget/newQuestComponents.data_stepTwo"
+);
+const { fetch_step_three_data } = VM.require(
+  "bos.questverse.near/widget/newQuestComponents.data_stepThree"
 );
 const stepOneData = fetch_step_one_data();
-// const {stepOneData, stepTwoData} = VM.require("bos.questverse.near/module/data_all"); I can do it like this
-// const { StepOne } = require("./bos.questverse.near/newQuestComponents.StepTwo");
+const stepTwoData = fetch_step_two_data();
+const stepThreeData = fetch_step_three_data();
+
+const totalSteps = 5;
 
 State.init({
   step: 1,
-  formData: {
-    //STEP 1
-    selectedCurrency: "",
-    selectedOption: "",
-    selectedFields: [],
-    //STEP 2
-    // audienceGroups: [],
 
-    //STEP 3
+  //STEP 1
+  inputs: {},
+  //STEP 2
+  masterList: [],
+  allowedList: [],
+  excludedList: [],
 
+  //STEP 3
+  rewardNetwork: "",
+  rewardToken: "",
+  tokensAllocated: 0,
+  rewardAmount: "",
 
-    //
-  },
+  //STEP 4
+  date_start: "",
+  date_end: "",
+
+  //step5
 });
 
-function handleNext(data) {
+const handleNext = (data) => {
   State.update({
-    formData: { ...state.formData, ...data },
+    // update here
     step: state.step + 1,
   });
-}
+};
 
-function handlePrevious() {
+const handlePrevious = () => {
   State.update({
-    step: state.step + 1,
+    step: state.step - 1,
   });
-}
+};
 
-function renderStep() {
-  switch (step) {
+const renderStep = () => {
+  switch (state.step) {
     case 1:
       return (
         <Widget
           src={"bos.questverse.near/widget/newQuestComponents.stepOne"}
           props={{
             data: stepOneData,
-            onNext: handleNext,
+            onNext: (data) => handleNext(data),
           }}
         />
       );
     case 2:
-      return <StepTwo onNext={handleNext} />;
-    // case 3:
-    //   return <StepThree data={} onNext={handleNext} onPrevious={handlePrevious} />;
-    default:
       return (
         <Widget
-          src={"bos.questverse.near/widget/newQuestComponents.stepOne"}
+          src={"bos.questverse.near/widget/newQuestComponents.stepTwo"}
           props={{
-            data: stepOneData,
-            onNext: handleNext,
+            data: stepTwoData,
+            onNext: (data) => handleNext(data),
           }}
         />
       );
+    case 3:
+      return (
+        <Widget
+          src={"bos.questverse.near/widget/newQuestComponents.stepThree"}
+          props={{
+            data: stepThreeData,
+            onNext: (data) => handleNext(data),
+          }}
+        />
+      );
+
+    case 4:
+      return (
+        <Widget
+          src={"bos.questverse.near/widget/newQuestComponents.stepFour"}
+          props={{
+            onNext: (data) => handleNext(data),
+          }}
+        />
+      );
+    case 5:
+      return (
+        <Widget
+          src={"bos.questverse.near/widget/newQuestComponents.stepFive"}
+          props={{
+            data: state.formData,
+            onNext: (data) => handleNext(data),
+          }}
+        />
+      );
+    default:
+      return "Error In Form";
   }
-}
+};
 
 return (
   <div>
@@ -78,25 +117,10 @@ return (
       </button>
     )}
 
+    {state.step !== 5 && (
+      <button onClick={() => handleNext(state.formData)}>Next</button>
+    )}
+    
     {state.step === totalSteps && <button type="submit">Submit</button>}
   </div>
 );
-
-//I wanted to pass in all JSON configs here
-
-
-
-/**
- * 
- * JSON -> Functions w req
- * 
- * 
- */
-
-
-
-/**
- * 
- * 
- * CREATE QUEST
- */

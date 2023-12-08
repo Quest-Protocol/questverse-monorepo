@@ -1,95 +1,85 @@
-// import TYPES from "./types.json"
-const TYPES = props.data;
-console.log('types', TYPES);
-// function formatDate(date) {
-//   const year = date.getFullYear();
-//   const month = (date.getMonth() + 1).toString().padStart(2, "0");
-//   const day = date.getDate().toString().padStart(2, "0");
-//   return [year, month, day].join("-");
-// }
 
-// const TODAY = formatDate(new Date());
-// const DAY_IN_SECONDS = 24 * 60 * 60 * 1000;
+const JSON = props.data;
+const options = JSON.options;
 
 State.init({
-  selectedCurrency: null,
-  selectedOption: null,
-  selectedFields: [],
+  selectedOption: "",
+  inputs: {},
 });
 
-function handleCurrencyChange(e) {
-  State.update({
-    selectedCurrency: e.target.value,
-    selectedOption: null,
-    selectedFields: [],
-  });
-}
-
-function handleOptionChange(e) {
-  console.log(e.target.value);
-  const currency = TYPES.project_types[0].crypto_currencies.find(
-    (crypto) => crypto.name === state.selectedCurrency
-  );
-  const action = currency.actions[e.target.value];
+const handleOptionChange = (e) => {
   State.update({
     selectedOption: e.target.value,
-    selectedFields: action.fields,
+    inputs: {},
   });
-}
+};
+
+const handleInputChange = (e, field) => {
+  const { id, value } = e.target;
+
+  State.update({
+    inputs: {
+      ...state.inputs,
+      [field]: { ...state.inputs[field], [id]: value },
+    },
+  });
+};
+
+const handleDisplay = () => {
+  console.log(state.inputs); //read
+};
+
+const renderInputs = () => {
+  if (!state.selectedOption) {
+    return null;
+  }
+
+  const selected = options.find(
+    (option) => option.name === state.selectedOption
+  );
+  if (!selected) {
+    return null;
+  }
+
+  return Object.keys(selected.actions).map((action, index) => {
+    const fields = selected.actions[action];
+    return (
+      <div key={index}>
+        <h3>{action}</h3>
+        {Object.keys(fields).map((field, i) => (
+          <div key={i}>
+            <label htmlFor={field}>{field}:</label>
+            <input
+              type="text"
+              id={field}
+              onChange={(e) => handleInputChange(e, action)}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  });
+};
 
 return (
   <div>
-    <div className="stepOne">
-      {/* <form action="123" onSubmit="..."> */}
-      <label htmlFor="currency">Select Currency:</label>
-      <select id="currency" onChange={handleCurrencyChange}>
-        <option value="">Select</option>
-        {TYPES.project_types[0].crypto_currencies.map((crypto) => (
-          <option key={crypto.name} value={crypto.name}>
-            {crypto.name}
-          </option>
-        ))}
-      </select>
-
-      {state.selectedCurrency && (
-        <div>
-          <label htmlFor="option">Select Option:</label>
-          <select id="option" onChange={handleOptionChange}>
-            <option value="">Select</option>
-            {TYPES.project_types[0].crypto_currencies
-              .find((crypto) => crypto.name === state.selectedCurrency)
-              .options.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-          </select>
-        </div>
-      )}
-      {state.selectedFields.length > 0 && (
-        <div>
-          {state.selectedFields.map((field, index) => (
-            <div key={index}>
-              <label htmlFor={field.name}>{field.name}:</label>
-              <select id={field.name}>
-                <option value="">Select</option>
-                {field.options.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ))}
-        </div>
-      )}
-      {/* </form> */}
-      {/* <button type="submit"> Submit</button> */}
+    <label htmlFor="options">Choose an option:</label>
+    <select
+      id="options"
+      onChange={handleOptionChange}
+      value={state.selectedOption}
+    >
+      <option value="">Select</option>
+      {options.map((option) => (
+        <option key={option.name} value={option.name}>
+          {option.name}
+        </option>
+      ))}
+    </select>
+    <div>
+      <h2>Inputs:</h2>
+      {renderInputs()}
     </div>
+    <button onClick={handleDisplay}>console log</button>
   </div>
 );
-//creation ->
-
-/**
- Import components to turn it into a carosel
- */
