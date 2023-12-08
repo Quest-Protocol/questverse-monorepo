@@ -36,6 +36,22 @@ function Page() {
         />
       );
     }
+    case "explore": {
+      return (
+        <Widget
+          src="/*__@appAccount__*//widget/pages.Explore"
+          props={passProps}
+        />
+      );
+    }
+    case "create": {
+      return (
+        <Widget
+          src="/*__@appAccount__*//widget/pages.Create"
+          props={passProps}
+        />
+      );
+    }
     default: {
       // TODO: 404 page
       return <p>404</p>;
