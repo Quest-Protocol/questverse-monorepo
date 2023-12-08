@@ -6,7 +6,7 @@ on:
 
 jobs:
   deploy-mainnet:
-    uses: nearbuilders/bos-workspace/.github/workflows/deploy.yml@feat/git-workflows
+    uses: nearbuilders/bos-workspace/.github/workflows/deploy.yml@main
     with:
       deploy-env: "mainnet"
       app-name: "QuestVerse"
