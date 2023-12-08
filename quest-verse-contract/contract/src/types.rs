@@ -4,18 +4,6 @@ use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::AccountId;
 
-use crate::quest::Quest;
-
-// #[allow(non_camel_case_types)]
-// #[derive(BorshSerialize, BorshDeserialize, Deserialize, Serialize, Clone)]
-// #[serde(crate = "near_sdk::serde")]
-// pub struct QueryApiIndexerConfig {
-//     indexer_id: String,
-//     function_name: String,
-//     account_id: AccountId,
-//     version: BlockHeight,
-// }
-
 #[allow(non_camel_case_types)]
 #[derive(BorshSerialize, BorshDeserialize, Deserialize, Serialize, Clone)]
 #[serde(crate = "near_sdk::serde")]
@@ -49,13 +37,4 @@ pub enum ClaimStatus {
     NotClaimed,
 }
 
-pub type BlockHeight = u64;
-
-pub struct QuestData {
-    quest_details: Quest,
-    usage: QuestUsage,
-}
-
-pub type QuestId = U128;
-
-pub type FunctionName = String;
+pub type QuestId = u64;
