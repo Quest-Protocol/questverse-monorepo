@@ -1,5 +1,5 @@
 use crate::{
-    QuestConditionQuery, QuestState, QuestStateError, QuestValidationInfo, QuestValidationRequest,
+    QuestConditionQuery, QuestState, QuestStateError, QuestValidationRequest,
 };
 use dotenv::dotenv;
 use reqwest::header::HeaderValue;
@@ -67,7 +67,9 @@ pub(crate) async fn check_quest(
     };
 
     match &quest_snapshot.is_completed {
-        true => Ok(QuestState::Completed("Quest has been completed".to_string())),
+        true => Ok(QuestState::Completed(
+            "Quest has been completed".to_string(),
+        )),
         false => Ok(QuestState::NotCompleted(
             "Quest has not been completed".to_string(),
             QuestConditionQuery {
