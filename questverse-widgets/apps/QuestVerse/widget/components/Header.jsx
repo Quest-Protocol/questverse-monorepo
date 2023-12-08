@@ -23,7 +23,9 @@ for (let i = 0; i < userSBTs.length; i++) {
 return (
   <div className="d-flex p-3 px-4 align-items-center rounded justify-content-between bg-black">
     <h3 className="mt-2" style={{ fontFamily: "Courier", color: "white" }}>
-      <b>QuestVerse</b>
+      <Link to="//*__@appAccount__*//widget/app">
+        <b>QuestVerse</b>
+      </Link>
     </h3>
     <Toolbar>
       {!isVerified ? (

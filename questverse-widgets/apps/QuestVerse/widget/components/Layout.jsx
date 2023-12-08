@@ -2,7 +2,7 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100%;
+  height: auto;
   min-height: 100vh;
 
   background: #f4f4f4;
@@ -42,7 +42,7 @@ const AppHeader = ({ page }) => (
 );
 
 const Footer = ({ page }) => {
-  return <p>Footer : {page}</p>;
+  return <></>;
 };
 
 function AppLayout({ page, children }) {

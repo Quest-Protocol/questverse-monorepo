@@ -36,10 +36,10 @@ function Page() {
         />
       );
     }
-    case "explore": {
+    case "discover": {
       return (
         <Widget
-          src="/*__@appAccount__*//widget/pages.Explore"
+          src="/*__@appAccount__*//widget/pages.Discover"
           props={passProps}
         />
       );
@@ -48,6 +48,14 @@ function Page() {
       return (
         <Widget
           src="/*__@appAccount__*//widget/pages.Create"
+          props={passProps}
+        />
+      );
+    }
+    case "quest": {
+      return (
+        <Widget
+          src="/*__@appAccount__*//widget/pages.Quest"
           props={passProps}
         />
       );

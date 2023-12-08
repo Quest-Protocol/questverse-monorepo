@@ -8,8 +8,6 @@ if (!quest) {
   return "quest data missing";
 }
 
-const questUrl = `//*__@appAccount__*//widget/quest.page?questId=${questId}`;
-
 const isEligible = props.isEligible ?? true;
 
 const Card = styled.div`
@@ -78,11 +76,11 @@ const Tag = styled.a`
 
 return (
   <Card>
-    <CardLeft>
-      <div className="d-flex flex-column me-3">
-        <div className="d-flex flex-row me-3">
-          <div className="me-3">
-            <a href={questUrl}>
+    <Link to={`//*__@appAccount__*//widget/app?page=quest&id=${questId}`}>
+      <CardLeft>
+        <div className="d-flex flex-column me-3">
+          <div className="d-flex flex-row me-3">
+            <div className="me-3">
               <Widget
                 src="mob.near/widget/ProfileImage"
                 props={{
@@ -94,48 +92,49 @@ return (
                   imageClassName: "w-100 h-100",
                 }}
               />
-            </a>
-          </div>
-          <div className="text-truncate">
-            <div className="text-truncate mb-1">
-              <a href={questUrl} style={{ textDecoration: "none" }}>
+            </div>
+            <div className="text-truncate">
+              <div className="text-truncate mb-1">
                 <span className="fw-bold" style={{ color: "black" }}>
                   {quest.title}
                 </span>
-              </a>
-            </div>
-            <div className="text-truncate text-muted">
-              {quest.tags.length > 0 && (
-                <>
-                  {quest.tags.map((tag, i) => (
-                    <span
-                      key={i}
-                      className="me-1 fw-light badge border border-secondary text-bg-light"
-                    >
-                      <a
-                        href={`//*__@appAccount__*//widget/quests?tag=${tag}`}
-                        style={{ textDecoration: "none" }}
-                        className="no-text-decoration"
+              </div>
+              <div className="text-truncate text-muted">
+                {quest.tags.length > 0 && (
+                  <>
+                    {quest.tags.map((tag, i) => (
+                      <span
+                        key={i}
+                        className="me-1 fw-light badge border border-secondary text-bg-light"
                       >
-                        <Tag>#{tag}</Tag>
-                      </a>
-                    </span>
-                  ))}
-                </>
-              )}
+                        <a
+                          href={`//*__@appAccount__*//widget/quests?tag=${tag}`}
+                          style={{ textDecoration: "none" }}
+                          className="no-text-decoration"
+                        >
+                          <Tag>#{tag}</Tag>
+                        </a>
+                      </span>
+                    ))}
+                  </>
+                )}
+              </div>
             </div>
           </div>
+          <p className="mt-3 m-1">{quest.description}</p>
         </div>
-        <p className="mt-3 m-1">{quest.description}</p>
-      </div>
-    </CardLeft>
+      </CardLeft>
+    </Link>
     {!isVerified && context.accountId && (
       <div className="d-flex flex-column m-3">
         <p>
           <b>{JSON.stringify(quest.reward_amount)} NEAR</b>
         </p>
 
-        <Widget src="/*__@appAccount__*//widget/components.quest.claim" props={{ questId }} />
+        <Widget
+          src="/*__@appAccount__*//widget/components.quest.claim"
+          props={{ questId }}
+        />
         <p className="text-center mt-1">
           <i>{JSON.stringify(quest.total_participants_allowed)} left</i>
         </p>
