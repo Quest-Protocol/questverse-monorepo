@@ -1,8 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::convert::Infallible;
-use std::error::Error;
 use std::fmt::Debug;
-use std::future::Future;
 use reqwest::{header::InvalidHeaderValue, Error as ReqwestError};
 use thiserror::Error;
 use warp::Filter;
@@ -39,10 +37,18 @@ enum QuestStateError {
     QueryNotFound,
 
     #[error("Claim error: {0}")]
-    ClaimError(Box<dyn Error>),
+    ClaimError(String),
 
     #[error("Invalid header value: {0}")]
     InvalidHeaderValueError(#[from] InvalidHeaderValue),
+}
+
+impl warp::reject::Reject for QuestStateError {}
+
+#[derive(Serialize)]
+struct WarpErrorMessage {
+    code: u16,
+    message: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -87,19 +93,23 @@ async fn validate_quest(info: QuestValidationInfo) -> Result<impl warp::Reply, I
 
 async fn generate_claim_receipt(
     info: QuestValidationRequest,
-) -> Result<impl warp::Reply, Infallible> {
+) -> Result<impl warp::Reply, warp::Rejection> {
     println!("info: {:?}", info);
 
-    let quest_condition = check_quest(&info)?;
+    let quest_condition = check_quest(&info).await;
 
     let mut signed_receipt = String::new();
     let mut message = None;
+
     match quest_condition {
-        QuestState::Completed(_, sig) => {
+        Ok(QuestState::Completed(_, sig)) => {
             signed_receipt = sig.to_string();
         },
-        QuestState::NotCompleted(msg, condition_query) => {
+        Ok(QuestState::NotCompleted(msg, _)) => {
             message = Some(msg);
+        },
+        Err(quest_error) => {
+            return Err(warp::reject::custom(quest_error));
         }
     }
 
@@ -111,6 +121,25 @@ async fn generate_claim_receipt(
             quest_id: info.quest_id,
         },
     }))
+}
+
+async fn handle_errors(err: warp::Rejection) -> Result<impl warp::Reply, warp::Rejection> {
+    if let Some(api_error) = err.find::<QuestStateError>() {
+        let code = match api_error {
+            QuestStateError::ReqwestError(_) => warp::http::StatusCode::BAD_GATEWAY,
+            QuestStateError::QueryNotFound => warp::http::StatusCode::NOT_FOUND,
+            _ => warp::http::StatusCode::INTERNAL_SERVER_ERROR,
+        };
+
+        let json = warp::reply::json(&WarpErrorMessage {
+            code: code.as_u16(),
+            message: api_error.to_string(),
+        });
+
+        Ok(warp::reply::with_status(json, code))
+    } else {
+        Err(err)
+    }
 }
 
 #[tokio::main]
@@ -131,7 +160,10 @@ async fn main() {
                     indexer_config_id,
                 },
             )
-            .and_then(generate_claim_receipt);
+            .and_then(generate_claim_receipt)
+            .recover(handle_errors);
+
+
     let routes = validate.or(generate_claim_receipt);
 
     warp::serve(routes).run(([127, 0, 0, 1], 8080)).await;

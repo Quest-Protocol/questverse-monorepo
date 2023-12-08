@@ -84,7 +84,9 @@ pub(crate) async fn check_quest(validation_request: &QuestValidationRequest) -> 
                     "Quest has been completed!".to_string(),
                     signature
                 )),
-                Err(e) => Err(QuestStateError::ClaimError(e))
+                Err(e) => {
+                    Err(QuestStateError::ClaimError(e.to_string()))
+                }
             }
         },
         false => {
