@@ -1,0 +1,18 @@
+name: Deploy 'QuestVerse' App Components to Mainnet
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy-mainnet:
+    uses: nearbuilders/bos-workspace/.github/workflows/deploy.yml@main
+    with:
+      deploy-env: "mainnet"
+      app-name: "QuestVerse"
+      working-directory: "questverse-widgets"
+      deploy-account-address: ${{ vars.PROD_SIGNER_ACCOUNT_ID }} 
+      signer-account-address: ${{ vars.PROD_SIGNER_ACCOUNT_ID }}
+      signer-public-key: ${{ vars.PROD_SIGNER_PUBLIC_KEY }}
+    secrets: 
+      SIGNER_PRIVATE_KEY: ${{ secrets.PROD_SIGNER_PRIVATE_KEY }}
