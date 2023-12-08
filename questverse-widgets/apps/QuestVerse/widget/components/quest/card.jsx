@@ -8,7 +8,7 @@ if (!quest) {
   return "quest data missing";
 }
 
-const questUrl = `//*__@appAccount__*//widget/quest.page?questId=${questId}`;
+const questUrl = `//*__@appAccount__*//widget/pages.QuestDetailsPage?questId=${questId}`;
 
 const isEligible = props.isEligible ?? true;
 
