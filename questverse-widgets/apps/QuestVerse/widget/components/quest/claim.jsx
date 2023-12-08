@@ -1,5 +1,6 @@
 const accountId = props.accountId ?? context.accountId;
 const questId = props.questId ?? "813740323";
+const hasAccepted = props.hasAccepted ?? false;
 
 if (!accountId) {
   return "";
@@ -8,34 +9,41 @@ if (!accountId) {
 const loading = joinEdge === null || memberEdge === null;
 
 const isAvailable = true;
-const isClaimed = false;
+const isAccepted = hasAccepted;
 
-const type = isClaimed ? "disclaim" : "claim";
+const type = isAccepted ? "opt-out" : "accept";
 
-const handleClaim = () => {
-  Social.set({
-    index: {
-      quest: JSON.stringify({
-        key: questId,
-        value: {
-          type,
-          accountId,
-        },
-      }),
-    },
+const handleAccept =
+  props.handleAccept ??
+  (() => {
+    Social.set({
+      index: {
+        quest: JSON.stringify({
+          key: questId,
+          value: {
+            type,
+            accountId,
+          },
+        }),
+      },
+    });
   });
-};
+
+const Container = styled.div`
+  text-align: center;
+`;
 
 return (
   <>
-    <button
-      disabled={loading}
-      className={`btn ${
-        loading || claimed ? "btn-outline-secondary" : "btn-outline-dark"
-      }`}
-      onClick={handleClaim}
-    >
-      {loading ? "loading" : closed ? "claimed" : "claim"}
-    </button>
+    <Container>
+      <button
+        disabled={loading}
+        className={`btn ${loading || claimed ? "btn-outline-secondary" : "btn-outline-dark"
+          }`}
+        onClick={handleAccept}
+      >
+        {loading ? "loading" : closed ? "opt-out" : "accept"}
+      </button>
+    </Container>
   </>
 );
