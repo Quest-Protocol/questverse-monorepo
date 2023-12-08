@@ -1,5 +1,9 @@
-use near_crypto::{InMemorySigner, SecretKey, Signature, Signer};
-use near_primitives::types::AccountId;
+//use near_crypto::{InMemorySigner, SecretKey, Signature, Signer};
+//use near_primitives::types::AccountId;
+
+use base64::engine::general_purpose::STANDARD_NO_PAD as BASE64_ENGINE;
+use base64::Engine;
+use ed25519_dalek::{Keypair, PublicKey, SecretKey, Signature, Signer};
 use std::env;
 use std::error::Error;
 use std::str::FromStr;
@@ -7,21 +11,49 @@ use std::str::FromStr;
 /// given a payload, `sign_claim` pulls the Secret Key and Account ID from environment and uses
 /// an in-memory signer
 pub(crate) fn sign_claim(payload: &[u8]) -> Result<Signature, Box<dyn Error>> {
+    let payload_str =
+        String::from_utf8(payload.to_vec()).unwrap_or_else(|_| "<Invalid UTF-8>".to_string());
+    println!("Payload: {}", payload_str);
+    // Payload: {"account_id":"erika.near","quest_id":"477474"}
+
+    println!("Payload (Base64): {}", BASE64_ENGINE.encode(payload));
+    // Payload (Base64): eyJhY2NvdW50X2lkIjoiZXJpa2EubmVhciIsInF1ZXN0X2lkIjoiNDc3NDc0In0
+
     let secret_key = env::var("SECRET_KEY")?;
-    let secret_key = SecretKey::from_str(&secret_key)?;
+    let secret_key_bytes = BASE64_ENGINE.decode(secret_key.as_bytes())?;
 
-    let account_id = env::var("ACCOUNT_ID").unwrap_or("v1.questverse.near".to_string());
-    let account_id = AccountId::from_str(&account_id)?;
+    let ed25519_secret_key = SecretKey::from_bytes(&secret_key_bytes[..32])?;
+    let public_key = PublicKey::from(&ed25519_secret_key);
 
-    let signer = InMemorySigner::from_secret_key(account_id, secret_key);
+    let keypair = Keypair {
+        secret: ed25519_secret_key,
+        public: public_key,
+    };
 
-    Ok(signer.sign(payload))
+    println!(
+        "Secret Key: {}",
+        BASE64_ENGINE.encode(keypair.secret.to_bytes())
+    );
+    println!(
+        "Public Key: {}",
+        BASE64_ENGINE.encode(keypair.public.to_bytes())
+    );
+
+    /*
+    Secret Key: 3gRVHC4Zzf8YdBUnvg3j3FTA163W4vbbR94rJ4oFW90
+    Public Key: 7lFxe6c0JlTveOEnULoV+L6gtGKXE1seN3usT21jrZM
+     */
+
+    let signature = keypair.sign(payload);
+
+    Ok(signature)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::QuestValidationInfo;
+    use ed25519_dalek::Verifier;
     use near_crypto::{KeyType, SecretKey};
     use serde_json;
     use std::path::Path;
@@ -47,6 +79,28 @@ mod tests {
         let secret_key = SecretKey::from_random(KeyType::ED25519);
         secret_key.to_string()
     }
+
+    #[test]
+    fn verify_with_ed25519() {
+        setup();
+
+        let payload = mock_payload();
+        let signature = sign_claim(&payload).unwrap();
+
+        let expected_public_key = env::var("PUBLIC_KEY").expect("PUBLIC_KEY not found");
+
+        let public_key_bytes = BASE64_ENGINE
+            .decode(expected_public_key.as_bytes())
+            .expect("Failed to decode PUBLIC_KEY from base64");
+        let public_key = PublicKey::from_bytes(&public_key_bytes).expect("Invalid public key");
+
+        assert!(
+            public_key.verify(&payload, &signature).is_ok(),
+            "Signature verification failed"
+        );
+    }
+
+    /*
 
     #[test]
     fn test_sign_claim_with_valid_keys_and_correct_signer() {
@@ -135,4 +189,6 @@ mod tests {
 
         assert!(is_valid, "The signature should be valid");
     }
+
+    */
 }

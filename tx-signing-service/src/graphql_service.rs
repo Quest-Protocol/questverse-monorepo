@@ -1,6 +1,4 @@
-use crate::{
-    QuestConditionQuery, QuestState, QuestStateError, QuestValidationRequest,
-};
+use crate::{QuestConditionQuery, QuestState, QuestStateError, QuestValidationRequest};
 use dotenv::dotenv;
 use reqwest::header::HeaderValue;
 use reqwest::{header::HeaderMap, Client};
@@ -84,6 +82,7 @@ pub(crate) async fn check_quest(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::QuestValidationInfo;
     use std::path::Path;
     use tokio::test as tokio_test;
 
