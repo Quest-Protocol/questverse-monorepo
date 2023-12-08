@@ -2944,6 +2944,7 @@ name = "quest-protocol"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "ed25519-dalek",
  "near-primitives 0.17.0",
  "near-sdk",
  "near-units",

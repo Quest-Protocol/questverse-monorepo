@@ -18,6 +18,13 @@ pub struct QuestUsage {
     redemptions_account_list: UnorderedSet<AccountId>,
 }
 
+#[derive(BorshSerialize, BorshDeserialize, Deserialize, Serialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct Claim {
+    pub account_id: String,
+    pub quest_id: String,
+}
+
 #[allow(non_camel_case_types)]
 #[derive(BorshSerialize, BorshDeserialize, Deserialize, Serialize, Clone)]
 #[serde(crate = "near_sdk::serde")]

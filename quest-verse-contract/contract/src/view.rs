@@ -1,5 +1,5 @@
-use near_sdk::env;
 use near_sdk::near_bindgen;
+use near_sdk::AccountId;
 // TODO:
 // 1. view method for all quests
 // 2. quests by deployers
@@ -28,8 +28,8 @@ impl QuestProtocol {
         self.quest_by_id.get(&quest_id)
     }
 
-    pub fn quests_by_owner(&self) -> Vec<Quest> {
-        let quest_ids = self.quest_owner_quest.get(&env::predecessor_account_id());
+    pub fn quests_by_owner(&self, owner: AccountId) -> Vec<Quest> {
+        let quest_ids = self.quest_owner_quest.get(&owner);
 
         let mut quests = Vec::new();
 
@@ -42,5 +42,13 @@ impl QuestProtocol {
         }
 
         quests
+    }
+
+    pub fn claimed_quests_by_user(&self, user: AccountId) -> Vec<QuestId> {
+        self.claimed_quests
+            .iter()
+            .filter(|(account_id, _quest_id)| *account_id == user)
+            .map(|(_account_id, quest_id)| quest_id)
+            .collect()
     }
 }
