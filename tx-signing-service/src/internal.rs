@@ -45,6 +45,9 @@ pub(crate) fn sign_claim(payload: &[u8]) -> Result<Signature, Box<dyn Error>> {
      */
 
     let signature = keypair.sign(payload);
+    println!("Signature: {}", BASE64_ENGINE.encode(signature.to_bytes()));
+    // Signature: aThQoO3GYfuB2/pXDqx4ABP/kt6tj02ceM7rlCIQndo8H/c0ccXRNj5G4VuNuy9FgZrWilkxhNlu1LF7bJbaBw
+
 
     Ok(signature)
 }
