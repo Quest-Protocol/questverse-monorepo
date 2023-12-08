@@ -76,7 +76,7 @@ async fn flow1() -> anyhow::Result<()> {
 
     let res = setup.alice
         .call(setup.quest_protocol.id(), "create_quest")
-        .args_json(json!({"starts_at": start_time_ms,"expires_at": end_time_ms, "total_participants_allowed": 3, "indexer_name": "indexer_test", "title": "", "description": "", "img_url": "", "tags": [] }))
+        .args_json(json!({"quest_id": 1,"starts_at": start_time_ms,"expires_at": end_time_ms, "total_participants_allowed": 3, "indexer_name": "indexer_test", "title": "", "description": "", "img_url": "", "tags": [] }))
         .max_gas()
         .deposit(parse_near!(" 10 N"))
         .transact()

@@ -1,6 +1,8 @@
 // Find all our documentation at https://docs.near.org
 use keypom_models::*;
 
+use ed25519_dalek::{Signature, Verifier};
+use near_sdk::base64;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap, LookupSet, UnorderedMap, UnorderedSet};
 use near_sdk::json_types::U128;
@@ -9,7 +11,7 @@ use near_sdk::{env, near_bindgen, require, AccountId, Gas, PanicOnDefault, Promi
 use quest::Quest;
 
 use storage::StorageKeys;
-use types::QuestId;
+use types::{Claim, QuestId};
 pub mod external;
 mod storage;
 use crate::constants::QUESTS_PROTOCOL_PUBLIC_KEY_STR;
@@ -34,10 +36,8 @@ pub struct QuestProtocol {
     claim_signer_public_key: PublicKey,
     /// pause contract activity
     global_freeze: bool,
-    /// identifier for quest assigned by the contract.
-    next_quest_id: u64,
     /// users -> claimed quests
-    claimed_quests: LookupSet<(AccountId, QuestId)>,
+    claimed_quests: UnorderedSet<(AccountId, QuestId)>,
     /// quest fee percentage
     quest_fee: u64,
 }
@@ -59,8 +59,7 @@ impl QuestProtocol {
             quest_owner_quest: LookupMap::new(StorageKeys::QuestOwnerQuest),
             claim_signer_public_key,
             global_freeze: false,
-            next_quest_id: 1,
-            claimed_quests: LookupSet::new(StorageKeys::ClaimedQuests),
+            claimed_quests: UnorderedSet::new(StorageKeys::ClaimedQuests),
             quest_fee,
         }
     }
@@ -77,6 +76,7 @@ impl QuestProtocol {
     #[allow(unused_variables)]
     pub fn create_quest(
         &mut self,
+        quest_id: u64,
         starts_at: u64,
         expires_at: u64,
         total_participants_allowed: u64,
@@ -106,7 +106,6 @@ impl QuestProtocol {
             attached_deposit - attached_deposit * self.quest_fee as u128 / 100;
         let creator = env::predecessor_account_id();
 
-        let quest_id = self.next_quest_id;
         let quest = Quest {
             quest_id,
             creator: creator.clone(),
@@ -129,8 +128,6 @@ impl QuestProtocol {
         } else {
             self.quest_owner_quest.insert(&creator, &vec![quest_id]);
         };
-
-        self.next_quest_id += 1;
 
         quest_id
     }
@@ -155,14 +152,17 @@ impl QuestProtocol {
         Promise::new(caller).transfer(refund)
     }
 
-    pub fn claim_reward(&mut self, quest_id: QuestId, signed_claim_receipt: String) -> Promise {
+    pub fn claim_reward(&mut self, claim: Claim, signature: String) -> Promise {
         self.assert_not_frozen();
         let caller = env::predecessor_account_id();
+        let quest_id = claim
+            .quest_id
+            .parse::<u64>()
+            .expect("error parsing quest_id");
         self.assert_not_claimed(quest_id);
         self.assert_quest_in_progress(quest_id);
 
-        // TODO: Check if receipt was signed by claim_signer_public_key
-        //self.verify_claim(hash);
+        self.verify_claim(claim, signature);
 
         // Update the state
         self.claimed_quests.insert(&(caller.clone(), quest_id));
@@ -200,6 +200,13 @@ impl QuestProtocol {
     pub fn admin_set_claim_signer(&mut self, new_signer: PublicKey) {
         self.assert_admin();
         self.claim_signer_public_key = new_signer;
+    }
+
+    pub fn admin_update_indexer_name(&mut self, quest_id: QuestId, indexer_name: String) {
+        self.assert_admin();
+        let mut quest = self.quest_by_id.get(&quest_id).expect("quest not found");
+        quest.indexer_name = indexer_name;
+        self.quest_by_id.insert(&quest_id, &quest);
     }
 
     /*****************
@@ -248,9 +255,21 @@ impl QuestProtocol {
     }
 
     /// Method that takes the quest_id and signed_claim_receipt and verifies it against the public key of the signing_serice
-    /// Returns `true` if correct else `false`.
-    fn verify_claim(&self, hash: String) -> bool {
-        unimplemented!()
+    fn verify_claim(&self, claim: Claim, signature: String) {
+        let serialized_claim = serde_json::to_string(&claim).expect("failed to serialize claim");
+        // we are skipping the beggining 'ed25519:'
+        // let signature_bytes = base64::decode(&signature[9..]).expect("failed to decode signature");
+
+        let signature =
+            Signature::from_bytes(&signature[9..].as_bytes()).expect("failed to create signature");
+
+        let public_key =
+            ed25519_dalek::PublicKey::from_bytes(self.claim_signer_public_key.as_bytes())
+                .expect("failed to create public key from bytes");
+
+        if let Err(err) = public_key.verify(serialized_claim.as_bytes(), &signature) {
+            panic!("signature verification failed: {}", err);
+        }
     }
 }
 
@@ -316,6 +335,7 @@ mod unit_tests {
         ctx.attached_deposit = 10 * ONE_NEAR;
         testing_env!(ctx.clone());
         let quest_id = ctr.create_quest(
+            1,
             (START + 1) * MSECOND,
             (START + 10) * MSECOND,
             3,
@@ -328,6 +348,17 @@ mod unit_tests {
         let quest = ctr.quest_by_id(quest_id);
         assert!(quest.is_some());
         assert_eq!(quest.unwrap().total_reward_amount, 9 * ONE_NEAR);
+    }
+
+    #[test]
+    fn verify_quest() {
+        let (mut ctx, mut ctr) = setup(&alice());
+        let claim = Claim {
+            account_id: "roshaan.near".to_string(),
+            quest_id: "322323".to_string(),
+        };
+        let signature = "ed25519:4VZxQVkHz3rH7KRjziYX5ZHtMfZDaSbqavprVkqzrzKxKoU6qxGjeZ6cwohKku6tdwnS5A9rZsSYhvrCzDQeHAEd".to_string();
+        ctr.verify_claim(claim, signature);
     }
 
     // Only the owner of the quest can delete the quest
