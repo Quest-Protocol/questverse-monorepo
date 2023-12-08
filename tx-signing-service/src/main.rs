@@ -1,14 +1,14 @@
+use crate::graphql_service::check_quest;
+use near_crypto::Signature;
+use reqwest::{header::InvalidHeaderValue, Error as ReqwestError};
 use serde::{Deserialize, Serialize};
 use std::convert::Infallible;
 use std::fmt::Debug;
-use reqwest::{header::InvalidHeaderValue, Error as ReqwestError};
 use thiserror::Error;
 use warp::Filter;
-use near_crypto::Signature;
-use crate::graphql_service::check_quest;
 
-mod internal;
 mod graphql_service;
+mod internal;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 struct QuestConditionQuery {
@@ -18,14 +18,8 @@ struct QuestConditionQuery {
 }
 
 enum QuestState {
-    Completed(
-        String,
-        Signature
-    ),
-    NotCompleted(
-        String,
-        QuestConditionQuery,
-    )
+    Completed(String, Signature),
+    NotCompleted(String, QuestConditionQuery),
 }
 
 #[derive(Debug, Error)]
@@ -104,10 +98,10 @@ async fn generate_claim_receipt(
     match quest_condition {
         Ok(QuestState::Completed(_, sig)) => {
             signed_receipt = sig.to_string();
-        },
+        }
         Ok(QuestState::NotCompleted(msg, _)) => {
             message = Some(msg);
-        },
+        }
         Err(quest_error) => {
             return Err(warp::reject::custom(quest_error));
         }
@@ -127,8 +121,9 @@ async fn handle_errors(err: warp::Rejection) -> Result<impl warp::Reply, warp::R
     if let Some(api_error) = err.find::<QuestStateError>() {
         let code = match api_error {
             QuestStateError::ReqwestError(_) => warp::http::StatusCode::BAD_GATEWAY,
+            QuestStateError::ClaimError(_) => warp::http::StatusCode::BAD_REQUEST,
+            QuestStateError::InvalidHeaderValueError(_) => warp::http::StatusCode::BAD_REQUEST,
             QuestStateError::QueryNotFound => warp::http::StatusCode::NOT_FOUND,
-            _ => warp::http::StatusCode::INTERNAL_SERVER_ERROR,
         };
 
         let json = warp::reply::json(&WarpErrorMessage {
@@ -162,7 +157,6 @@ async fn main() {
             )
             .and_then(generate_claim_receipt)
             .recover(handle_errors);
-
 
     let routes = validate.or(generate_claim_receipt);
 

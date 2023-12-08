@@ -21,10 +21,10 @@ pub(crate) fn sign_claim(payload: &[u8]) -> Result<Signature, Box<dyn Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::QuestValidationInfo;
     use near_crypto::{KeyType, SecretKey};
     use serde_json;
     use std::path::Path;
-    use crate::{QuestValidationInfo};
 
     fn setup() {
         let dotenv_path = Path::new(".env.test");
@@ -32,7 +32,7 @@ mod tests {
     }
 
     fn mock_payload() -> Vec<u8> {
-        serde_json::to_string(&QuestValidationInfo{
+        serde_json::to_string(&QuestValidationInfo {
             account_id: "erika.near".to_string(),
             quest_id: 477474.to_string(),
         })
@@ -66,7 +66,8 @@ mod tests {
 
         let secret_key =
             SecretKey::from_str(&valid_secret_key).expect("Failed to parse secret key");
-        let account_id = AccountId::from_str(&valid_account_id).expect("Failed to parse account ID");
+        let account_id =
+            AccountId::from_str(&valid_account_id).expect("Failed to parse account ID");
         let signer = InMemorySigner::from_secret_key(account_id, secret_key);
 
         let is_valid = signer.verify(&payload, &signature);
@@ -97,7 +98,8 @@ mod tests {
 
         let sk2 = generate_valid_secret_key();
         let secret_key = SecretKey::from_str(&sk2).expect("Failed to parse secret key");
-        let account_id = AccountId::from_str(&valid_account_id).expect("Failed to parse account ID");
+        let account_id =
+            AccountId::from_str(&valid_account_id).expect("Failed to parse account ID");
         let signer = InMemorySigner::from_secret_key(account_id, secret_key);
 
         let is_valid = signer.verify(&payload, &signature);
@@ -120,7 +122,7 @@ mod tests {
             signature.is_ok(),
             "sign_claim should succeed with default account ID"
         );
-      
+
         let signature = signature.unwrap();
 
         let secret_key =
