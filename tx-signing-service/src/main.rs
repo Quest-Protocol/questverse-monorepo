@@ -4,6 +4,8 @@ use reqwest::{header::InvalidHeaderValue, Error as ReqwestError};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use thiserror::Error;
+use tracing::{error, info, instrument, Level};
+use tracing_subscriber::fmt;
 use warp::Filter;
 
 mod graphql_service;
@@ -25,6 +27,9 @@ enum QuestState {
 enum QuestStateError {
     #[error("Request failed: {0}")]
     ReqwestError(#[from] ReqwestError),
+
+    #[error("Configuration error: {0}")]
+    ConfigError(String),
 
     #[error("Query not found")]
     QueryNotFound,
@@ -76,8 +81,12 @@ struct ClaimReceiptResponse {
     claim_data: QuestValidationInfo,
 }
 
+#[instrument]
 async fn validate_quest(info: QuestValidationRequest) -> Result<impl warp::Reply, warp::Rejection> {
-    println!("info: {:?}", info);
+    info!(
+        "Validating quest for {} with indexer_config_id: {}",
+        &info.account_id, &info.indexer_config_id
+    );
 
     let quest_condition = check_quest(&info).await?;
 
@@ -95,10 +104,14 @@ async fn validate_quest(info: QuestValidationRequest) -> Result<impl warp::Reply
     })
 }
 
+#[instrument]
 async fn generate_claim_receipt(
     info: QuestValidationRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    println!("info: {:?}", info);
+    info!(
+        "Generating claim receipt for {} with indexer_config_id: {}",
+        &info.account_id, &info.indexer_config_id
+    );
 
     let quest_condition = check_quest(&info).await?;
 
@@ -146,6 +159,7 @@ async fn handle_errors(err: warp::Rejection) -> Result<impl warp::Reply, warp::R
     if let Some(api_error) = err.find::<QuestStateError>() {
         let code = match api_error {
             QuestStateError::ReqwestError(_) => warp::http::StatusCode::BAD_GATEWAY,
+            QuestStateError::ConfigError(_) => warp::http::StatusCode::BAD_REQUEST,
             QuestStateError::ClaimError(_) => warp::http::StatusCode::BAD_REQUEST,
             QuestStateError::InvalidHeaderValueError(_) => warp::http::StatusCode::BAD_REQUEST,
             QuestStateError::QueryNotFound => warp::http::StatusCode::NOT_FOUND,
@@ -156,6 +170,8 @@ async fn handle_errors(err: warp::Rejection) -> Result<impl warp::Reply, warp::R
             message: api_error.to_string(),
         });
 
+        error!("An error occurred:\n{}", api_error.to_string());
+
         Ok(warp::reply::with_status(json, code))
     } else {
         Err(err)
@@ -164,6 +180,12 @@ async fn handle_errors(err: warp::Rejection) -> Result<impl warp::Reply, warp::R
 
 #[tokio::main]
 async fn main() {
+    fmt::Subscriber::builder()
+        .with_max_level(Level::INFO)
+        .with_writer(std::io::stdout)
+        .fmt_fields(fmt::format::PrettyFields::new())
+        .init();
+
     let validate = warp::path!("v1" / "validate" / String / String / String)
         .map(
             |account_id, quest_id, indexer_config_id| QuestValidationRequest {
