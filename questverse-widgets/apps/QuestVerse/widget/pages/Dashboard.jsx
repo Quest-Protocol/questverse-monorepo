@@ -3,7 +3,6 @@ const daoId = "hack.near";
 const registryContract = "registry.i-am-human.near";
 const issuer = "fractal.i-am-human.near";
 
-
 const quests = Near.view("questsmock.near", "get_all_quests");
 
 if (!quests) {
@@ -164,25 +163,43 @@ return (
   <>
     <div>
       <Header className="d-flex p-3 px-4 align-items-center rounded justify-content-between">
-  <h3 className="mt-2" style={{ fontFamily: "Helvetica Neue", fontSize: "30px", color: "white" }}>
+        <h3
+          className="mt-2"
+          style={{
+            fontFamily: "Helvetica Neue",
+            fontSize: "30px",
+            color: "white",
+          }}
+        >
           <b>QuestVerse</b>
         </h3>
 
-        {!isVerified ? (
+        <div className="d-flex align-items-center gap-2">
+          {!isVerified ? (
+            <Widget
+              src="hack.near/widget/n.style"
+              props={{
+                Link: {
+                  text: "Get Verified",
+                  href: "https://i-am-human.app/",
+                },
+              }}
+            />
+          ) : (
+            <Toolbar>
+              <Widget src="hack.near/widget/start" />
+            </Toolbar>
+          )}
           <Widget
             src="hack.near/widget/n.style"
             props={{
               Link: {
-                text: "Get Verified",
-                href: "https://i-am-human.app/",
+                text: "Create Quest",
+                href: "https://near.org//*__@appAccount__*//widget/pages.CreateQuestFlow",
               },
             }}
           />
-        ) : (
-          <Toolbar>
-            <Widget src="hack.near/widget/start" />
-          </Toolbar>
-        )}
+        </div>
       </Header>
       <Container className="d-flex row justify-content-between w-100">
         <h2 className="mb-3" style={{ fontFamily: "Helvetica Neue" }}>
