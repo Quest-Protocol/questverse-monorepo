@@ -76,7 +76,9 @@ const Tag = styled.a`
 
 return (
   <Card>
-    <Link to={`//*__@appAccount__*//widget/app?page=quest&id=${questId}`}>
+    <Link
+      to={`//*__@appAccount__*//widget/pages.QuestDetailsPage?questId=${questId}`}
+    >
       <CardLeft>
         <div className="d-flex flex-column me-3">
           <div className="d-flex flex-row me-3">
