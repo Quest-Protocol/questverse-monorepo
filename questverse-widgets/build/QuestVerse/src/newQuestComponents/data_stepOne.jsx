@@ -37,7 +37,7 @@ function fetch_step_one_data({}) {
           "comment on a post": {
             post_id: "<number_input>",
           },
-          "complete widget metadata information": {},
+          // "complete widget metadata information": {},
         },
       },
       {
@@ -57,11 +57,7 @@ function fetch_step_one_data({}) {
         name: "near horizon",
         actions: {
           "propose a contribution": {
-            options: [
-              "any",
-              { project_name: "<input_text>" },
-              "create a project",
-            ],
+            project_name: "<input_text>",
           },
         },
       },
@@ -69,7 +65,7 @@ function fetch_step_one_data({}) {
         name: "devgogs.near",
         actions: {
           "post a solution": {
-            get_number_likes: { type: "<number_input>", default: 0 },
+            get_number_likes: "<number_input>",
           },
           "reply to a post": {
             id: "<number_input>",
@@ -88,16 +84,17 @@ function fetch_step_one_data({}) {
         name: "Mintbase",
         actions: {
           "Buy NFT from Mintbase": {
-            options: [
-              "any",
-              {
-                "specific collection": {
-                  collection_account_id: "<text_input>",
-                },
-              },
-            ],
-            "List NFT on Mintbase": {},
-            "Create a collection on Mintbase": {},
+            // account_id: "<text_input>",
+            // number_of_interactions: "<number_input>",
+          },
+          "List NFT on Mintbase": {
+            // account_id: "<text_input>",
+            // method_name: "<text_input>",
+            // number_of_interactions: "<number_input>",
+          },
+          "Create a collection on Mintbase": {
+            // account_id: "<text_input>",
+            // near_amount: "<number_input>",
           },
         },
       },
