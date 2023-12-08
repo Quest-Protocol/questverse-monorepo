@@ -1,5 +1,6 @@
 const accountId = props.accountId ?? context.accountId;
 const questId = props.questId ?? "813740323";
+const notifyAccountId = props.notifyAccountId ?? true;
 
 const quest =
   props.quest ?? Near.view("questsmock.near", "get_quest_by_id", { questId });
@@ -11,6 +12,98 @@ if (!quest) {
 const questUrl = `//*__@appAccount__*//widget/quest.page?questId=${questId}`;
 
 const isEligible = props.isEligible ?? true;
+State.init({ quests: [] });
+let quests_idx =
+  Social.index("quest", Number(questId), {
+    subscribe: true,
+    order: "desc",
+  }) ?? [];
+
+const dataLoading = state.quests === null;
+
+const questsByUsers = {};
+(quests_idx || []).forEach((quest) => {
+  if (quest.value.type === "accept") {
+    questsByUsers[quest.accountId] = quest;
+  } else if (quest.value.type === "unaccept") {
+    delete questsByUsers[quest.accountId];
+  }
+});
+
+if (state.hasAccepted === true) {
+  questsByUsers[context.accountId] = {
+    accountId: context.accountId,
+  };
+} else if (state.hasAccepted === false) {
+  delete questsByUsers[context.accountId];
+}
+
+const accountsWithQuests = questsByUsers;
+console.log(accountsWithQuests, "accountsWithQuests");
+
+const hasAccepted = context.accountId && !!questsByUsers[context.accountId];
+const hasAcceptedOptimistic =
+  state.hasAcceptedOptimistic === undefined
+    ? hasAccepted
+    : state.hasAcceptedOptimistic;
+
+const total_redeemed =
+  accountsWithQuests.length +
+  (hasAccepted === false && state.hasAcceptedOptimistic === true ? 1 : 0) -
+  (hasAccepted === true && state.hasAcceptedOptimistic === false ? 1 : 0);
+
+console.log(state.quests);
+console.log("-----");
+
+const startQuestAccept = () => {
+  if (state.loading) {
+    return;
+  }
+
+  State.update({
+    loading: true,
+    hasAcceptedOptimistic: !hasAccepted,
+  });
+
+  const data = {
+    index: {
+      quest: JSON.stringify({
+        key: questId,
+        value: {
+          type: hasAccepted ? "unaccept" : "accept",
+          accountId,
+        },
+      }),
+    },
+  };
+
+  if (!hasAccepted && notifyAccountId) {
+    data.index.notify = JSON.stringify({
+      key: props.notifyAccountId,
+      value: {
+        type: "accept_quest",
+        item,
+        accountId,
+      },
+    });
+  }
+  Social.set(data, {
+    onCommit: () => State.update({ loading: false, hasAccepted: !hasAccepted }),
+    onCancel: () =>
+      State.update({
+        loading: false,
+        hasAcceptedOptimistic: !state.hasAcceptedOptimistic,
+      }),
+  });
+};
+const ButtonContainer = styled.div`
+  display: flex;
+  text-align: center;
+  width: 12%;
+  flex-direction: column;
+  margin: 0.75rem;
+  justify-content: center;
+`;
 
 const Card = styled.div`
   display: flex;
@@ -31,7 +124,7 @@ const CardLeft = styled.div`
   display: flex;
   gap: 18px;
   align-items: center;
-  width: 100%;
+  width: 80%;
   min-width: 0;
   padding-left: 12px;
 
@@ -44,7 +137,7 @@ const CardLeft = styled.div`
 `;
 
 const TextLink = styled.a`
-  display: block;
+  display: flex;
   margin: 0;
   font-size: 14px;
   line-height: 18px;
@@ -130,16 +223,23 @@ return (
       </div>
     </CardLeft>
     {!isVerified && context.accountId && (
-      <div className="d-flex flex-column m-3">
-        <p>
+      <ButtonContainer>
+        <p className="text-center mb-1">
           <b>{JSON.stringify(quest.reward_amount)} NEAR</b>
         </p>
 
-        <Widget src="/*__@appAccount__*//widget/components.quest.claim" props={{ questId }} />
+        <Widget
+          src="/*__@appAccount__*//widget/components.quest.claim"
+          props={{
+            questId,
+            handleAccept: startQuestAccept,
+            hasAccepted: state.hasAccepted,
+          }}
+        />
         <p className="text-center mt-1">
           <i>{JSON.stringify(quest.total_participants_allowed)} left</i>
         </p>
-      </div>
+      </ButtonContainer>
     )}
   </Card>
 );
