@@ -164,7 +164,7 @@ function Item({ accountId, name, type, metadata }) {
 return (
   <Container>
     <div className="d-flex justify-content-between align-items-center w-100">
-      <h2 className="mb-3" style={{ fontFamily: "Courier" }}>
+      <h2 className="mb-3" style={{ fontFamily: "Helvetica Neue" }}>
         <b>Discover</b>
       </h2>
       <Link to={`//*__@appAccount__*//widget/app?page=create`}>
