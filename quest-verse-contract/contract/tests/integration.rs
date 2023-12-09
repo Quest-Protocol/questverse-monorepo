@@ -45,11 +45,12 @@ async fn init(worker: &Worker<impl DevNetwork>) -> anyhow::Result<InitStruct> {
     let alice = worker.dev_create_account().await?;
     let bob = worker.dev_create_account().await?;
     let john = worker.dev_create_account().await?;
+    let registry = worker.dev_create_account().await?;
 
     // initialize contracts
     let res = quest_protocol
         .call("new")
-        .args_json(json!({"admin": admin.id(),"claim_signer_pk": null, "quest_fee": 10}))
+        .args_json(json!({"admin": admin.id(),"registry": registry.id(), "claim_signer_pk": null, "quest_fee": 10}))
         .max_gas()
         .transact()
         .await?;

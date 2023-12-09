@@ -16,4 +16,5 @@ pub struct Quest {
     pub num_claimed_rewards: u64,
     pub participants: Vec<AccountId>,
     pub indexer_name: String,
+    pub humans_only: bool,
 }

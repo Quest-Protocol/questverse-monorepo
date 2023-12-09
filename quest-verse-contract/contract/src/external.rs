@@ -41,3 +41,8 @@ trait Keypom {
     );
     fn get_drop_information(drop_id: Option<DropIdJson>, key: Option<PublicKey>) -> JsonDrop;
 }
+
+#[ext_contract(ext_sbtreg)]
+pub trait ExtSbtRegistry {
+    fn is_human(&self, account: AccountId) -> Vec<(AccountId, Vec<u64>)>;
+}
