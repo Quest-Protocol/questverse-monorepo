@@ -5,12 +5,23 @@ authors = ["Near Inc <hello@near.org>"]
 edition = "2021"
 
 [lib]
-crate-type = ["cdylib"]
+resolver = "2"
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 near-sdk = "4.1.1"
 serde_json = "1.0.91"
 uint = { version = "0.9.3", default-features = false }
+ed25519-dalek = "1"
+
+# integration tests
+[dev-dependencies]
+tokio = { version = "1.28.0", features = ["full"] }
+near-workspaces = "0.8.0"
+near-primitives = "0.17.0"
+near-units = "0.2.0"
+anyhow = "1.0"
+
 
 [profile.release]
 codegen-units = 1
