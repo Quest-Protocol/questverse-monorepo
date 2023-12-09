@@ -11,22 +11,28 @@ const TODAY = formatDate(new Date());
 const DAY_IN_SECONDS = 24 * 60 * 60 * 1000;
 const ONE_WEEK = DAY_IN_SECONDS * 7;
 
+State.init({
+  date_start: formatDate(new Date(Date.now() + DAY_IN_SECONDS)),
+  date_end: formatDate(new Date(Date.now() + ONE_WEEK)),
+  starts_at: null,
+  expires_at: null,
+});
+
 const setStartDate = (e) => {
   State.update({
-    starts_at: e.target.value.toISOString(),
+    ...state,
+    date_start: e.target.value,
+    starts_at: new Date(e.target.value).getTime(),
   });
 };
 
 const setEndDate = (e) => {
   State.update({
-    expires_at: e.target.value.toISOString(),
+    ...state,
+    date_end: e.target.value,
+    expires_at: new Date(e.target.value).getTime(),
   });
 };
-
-State.init({
-  date_start: formatDate(new Date(Date.now() + DAY_IN_SECONDS)),
-  date_end: formatDate(new Date(Date.now() + ONE_WEEK)),
-});
 
 return (
   <div className="mt-4 ndc-card p-4">
