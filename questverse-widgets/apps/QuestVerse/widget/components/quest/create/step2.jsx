@@ -1,3 +1,7 @@
+const { fetch_step_two_data } = VM.require(
+  "bos.questverse.near/widget/data.data_stepTwo"
+);
+const data = fetch_step_two_data();
 const { formState, errors, renderFooter } = props;
 
 const initialAnswers = {
