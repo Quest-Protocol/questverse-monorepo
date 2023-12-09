@@ -3,7 +3,7 @@
 </p>
 
 ### What is the **Quest Protocol**?
-Quest Protocol is a rewards-like protocol that allows anyone to engage users to perform on-chain activity and earn crypto-native rewards for doing so. 
+Quest Protocol is a rewards protocol that allows anyone to engage users to perform on-chain activity and earn crypto-native rewards for doing so. 
 
 We think that incentivized Quests (NFTs or USDC/Near/ETH) are an excellent tool in any web3 founders toolbox to not only educate their userbase but also incentive users to engage with their protocol to get usage and feedback from their customers!
 
@@ -16,7 +16,6 @@ A smart contract on the Near Blockchain that handles quest creation, indexer con
 Indexer adapted from `near/queryapi` which is used to run and host indexers that power quests. The service exposes a GraphQL endpoint to fetch information completion status for each quest. The `tx-signing-service` uses this endpoint to validate and create reward redemption receipts. You can follow the project [here](https://github.com/near/queryapi)
 3. [Signing Service](./tx-signing-service)
 This service allows users to retrieve a `receipt` that allows them to redeem their rewards for compeleting quests.The service validates that the user completed the quest and signs a tx for the intended `account_id` to redeem the reward from the protocol deployed at `quests.near` 
-
 4. [BOS Components](./widgets)
 UI components hosted on the BOS which let users sign up for quests, create quests, see a leaderboard of fellow questors, as well as redeem your quest rewards.
 
