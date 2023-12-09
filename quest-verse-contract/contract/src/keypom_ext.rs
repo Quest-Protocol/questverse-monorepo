@@ -6,7 +6,7 @@ pub const NO_DEPOSIT: u128 = 0;
 pub const XCC_SUCCESS: u64 = 1;
 
 // Validator interface, for cross-contract calls
-#[ext_contract(keypom_near)]
+#[ext_contract(v2_keypom_near)]
 trait Keypom {
     fn create_drop(
         &mut self,

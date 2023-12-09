@@ -1,5 +1,6 @@
 // Find all our documentation at https://docs.near.org
 use keypom_models::*;
+use types::*;
 
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap, LookupSet, UnorderedMap, UnorderedSet};
@@ -11,109 +12,17 @@ use near_sdk::{
     PromiseResult, PublicKey,
 };
 use std::convert::TryFrom;
-pub mod external;
-pub use crate::external::*;
+
+pub mod keypom_ext;
+pub use crate::keypom_ext::*;
+
 mod keypom_models;
+mod types;
 mod utils;
 
-#[allow(non_camel_case_types)]
-#[derive(BorshSerialize, BorshDeserialize, Deserialize, Serialize, Clone)]
-#[serde(crate = "near_sdk::serde")]
-pub struct Quest {
-    quest_id: U128,
-    quest_type: RewardType,
-    start_time: u64,
-    end_time: u64,
-    reward_config: Option<QuestRewardConfig>,
-    reward_amount: U128,
-    total_participants_allowed: u64,
-    indexer_config_id: String,
-}
-
-impl TryFrom<JsonDrop> for Quest {
-    type Error = &'static str;
-
-    fn try_from(keypom_drop_info: JsonDrop) -> Result<Self, Self::Error> {
-        if let Some(config) = keypom_drop_info.config {
-            if let Some(time) = config.time {
-                if let Some(start_time) = time.start {
-                    if let Some(end_time) = time.end {
-                        if let Some(uses_per_key) = config.uses_per_key {
-                            return Ok(Quest {
-                                quest_id: keypom_drop_info.drop_id,
-                                start_time,
-                                end_time,
-                                reward_config: None,
-                                reward_amount: keypom_drop_info.deposit_per_use,
-                                total_participants_allowed: uses_per_key,
-                                indexer_config_id: String::new(),
-                                quest_type: RewardType::Native,
-                            });
-                        }
-                    }
-                }
-            }
-        }
-
-        Err("Conversion from JsonDrop to Quest failed.")
-    }
-}
-
-#[allow(non_camel_case_types)]
-#[derive(BorshSerialize, BorshDeserialize, Deserialize, Serialize, Clone)]
-#[serde(crate = "near_sdk::serde")]
-pub struct QueryApiIndexerConfig {
-    indexer_id: String,
-    function_name: String,
-    account_id: AccountId,
-    version: BlockHeight,
-}
-
-#[allow(non_camel_case_types)]
-#[derive(BorshSerialize, BorshDeserialize, Deserialize, Serialize, Clone)]
-#[serde(crate = "near_sdk::serde")]
-pub struct QuestRewardConfig {
-    reward_token_address: String,
-    reward_amount: U128,
-}
-
-#[derive(BorshSerialize, BorshDeserialize)]
-pub struct QuestUsage {
-    total_redemptions: U128,
-    redemptions_account_list: UnorderedSet<AccountId>,
-}
-
 const KEYPOM_CONTRACT: &str = "v2.keypom.testnet";
-const QUESTS_PROTOCOL_PUBLIC_KEY_STR: &str = "ed25519:Dru47TDn3vaN2PMXwoq8cY6o2ERzqcidxFj6NTdxUgHh";
-pub const MIN_DROP_ID_PASSED_IN: u128 = 1_000_000_000;
-
-#[allow(non_camel_case_types)]
-#[derive(BorshSerialize, BorshDeserialize, Deserialize, Serialize, Clone)]
-#[serde(crate = "near_sdk::serde")]
-pub enum RewardType {
-    // In $NEAR
-    Native,
-    // Any Fungible Token NEP-141
-    FT,
-    // NEP-177 tokens
-    NFT,
-}
-
-#[derive(BorshSerialize, BorshDeserialize, Serialize, Clone)]
-#[serde(crate = "near_sdk::serde")]
-pub enum ClaimStatus {
-    Claimed,
-    NotClaimed,
-}
-
-pub type BlockHeight = u64;
-
-pub struct QuestData {
-    quest_details: Quest,
-    usage: QuestUsage,
-}
-
-pub type QuestId = U128;
+const QUESTS_PROTOCOL_DEFAULT_PUBLIC_KEY_STR: &str =
+    "ed25519:Dru47TDn3vaN2PMXwoq8cY6o2ERzqcidxFj6NTdxUgHh";
 
 #[derive(BorshStorageKey, BorshSerialize)]
 pub enum StorageKeys {
@@ -128,10 +37,18 @@ pub type FunctionName = String;
 // pub type IndexerConfigById = ;
 // pub type QuestIdsByDeployer = UnorderedMap<AccountId, Vec<QuestById>>;
 // Define the contract structure
+
+#[derive(BorshSerialize, BorshDeserialize)]
+pub struct QuestUsage {
+    total_redemptions: U128,
+    redemptions_account_list: UnorderedSet<AccountId>,
+}
+
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct QuestProtocol {
     contract_owner_id: AccountId,
+    keypom_account_id: AccountId,
     // indexer configurations. At this moment only editable by the owner
     indexer_configs_by_id: LookupMap<FunctionName, QueryApiIndexerConfig>,
     // quests by a quest_id
@@ -150,14 +67,21 @@ pub struct QuestProtocol {
 #[near_bindgen]
 impl QuestProtocol {
     #[init]
-    pub fn new(owner_id: AccountId, claim_signer_public_key: String) -> Self {
+    pub fn new(
+        owner_id: AccountId,
+        keypom_account_id: AccountId,
+        default_claim_signer_public_key: String,
+    ) -> Self {
         Self {
             contract_owner_id: owner_id,
+            keypom_account_id: keypom_account_id
+                .unwrap_or_else(|| KEYPOM_CONTRACT.parse().unwrap()),
             quest_by_id: UnorderedMap::new(StorageKeys::QuestById),
             quest_ids_by_deployer: UnorderedMap::new(StorageKeys::QuestIdsByDeployer),
             indexer_configs_by_id: LookupMap::new(StorageKeys::IndexerConfigsById),
             whitelisted_tokens: UnorderedSet::new(StorageKeys::Whitelist),
-            claim_signer_public_key: claim_signer_public_key.parse().unwrap(),
+            claim_signer_public_key: default_claim_signer_public_key
+                .unwrap_or_else(|| QUESTS_PROTOCOL_DEFAULT_PUBLIC_KEY_STR.parse().unwrap()),
             global_freeze: false,
         }
     }
@@ -172,8 +96,8 @@ impl QuestProtocol {
         reward_amount: U128,
         reward_type: RewardType,
         indexer_config_id: String,
+        quest_validator_public_key: Option<String>,
     ) -> Promise {
-        //
         //TODO check for drop ID being above the minimum
         let contract_drop_public_key: PublicKey = QUESTS_PROTOCOL_PUBLIC_KEY_STR.parse().unwrap(); // Ensuring start_time is before end_time
         require!(start_time < end_time, "Start time must be before end time.");
@@ -211,7 +135,7 @@ impl QuestProtocol {
         };
 
         let near_attached = env::attached_deposit();
-        let promise = keypom_near::ext(KEYPOM_CONTRACT.parse().unwrap())
+        let promise = v2_keypom_near::ext(KEYPOM_CONTRACT.parse().unwrap())
             .with_attached_deposit(near_attached)
             .with_static_gas(Gas(5 * TGAS))
             .create_drop(
@@ -253,7 +177,7 @@ impl QuestProtocol {
         // Deserialize the returned object.
         let drop_id: U128 = serde_json::from_str(&call_result.unwrap()).unwrap();
 
-        let promise = keypom_near::ext(KEYPOM_CONTRACT.parse().unwrap())
+        let promise = v2_keypom_near::ext(KEYPOM_CONTRACT.parse().unwrap())
             .with_attached_deposit(near_attached)
             .with_static_gas(Gas(5 * TGAS))
             .get_drop_information(Some(drop_id), None);
@@ -327,13 +251,95 @@ impl QuestProtocol {
         unimplemented!()
     }
 
-    #[payable]
-    pub fn claim_reward(&mut self, quest_id: String, signed_claim_receipt: String) {
-        // Check if receipt was signed by claim_signer_public_key
-        // Call Keypom.claim()
-        unimplemented!()
+    #[private]
+    fn is_receipt_valid(message: RewardReceiptDetails, receipt: String) -> bool {
+        true
+        // unimplemented!()
+        //     recreated_receipt = hash(message)
+        // assert!(receipt, recreated_receipt)
     }
 
+    #[payable]
+    pub fn claim_reward(&mut self, quest_id: String, receipt: String) {
+        let account_id = env::current_account_id();
+        // check if user already claimed their reward or not.
+        self.quest_by_id.get(&quest_id);
+
+        assert_eq!(
+            env::predecessor_account_id(),
+            env::current_account_id(),
+            "Claim only can come by the user who completed the quest"
+        );
+        assert!(
+            env::is_valid_account_id(account_id.as_bytes()),
+            "Invalid AccountId passed in"
+        );
+        let reward_receipt_details = RewardReceiptDetails {
+            quest_id,
+            account_id,
+            completed: true,
+        };
+        //
+        //
+        // TODO: Check if enough gas is attached
+        // Check if enough gas is attached. For callback + this function to go through
+        //
+        let is_valid = self.is_receipt_valid(reward_receipt_details, receipt);
+        assert_eq!(is_valid, true, "Receipt was not valid");
+
+        // Check if receipt was signed by claim_signer_public_key
+        // Call Keypom.claim()
+        let near_attached = env::attached_deposit();
+        let promise = v2_keypom_near::ext(self.keypom_account_id.parse().unwrap())
+            .with_attached_deposit(near_attached)
+            .with_static_gas(Gas(5 * TGAS))
+            .claim(quest_id);
+
+        promise.then(
+            Self::ext(env::current_account_id())
+                .with_attached_deposit(near_attached)
+                .with_static_gas(Gas(5 * TGAS))
+                .claim_successful_callback(),
+        )
+    }
+
+    #[private]
+    pub fn claim_successful_callback(
+        &mut self,
+        quest_id: U128,
+        #[callback_result] call_result: Result<String, PromiseError>,
+    ) -> bool {
+        // Add information about the drop being succesfful
+        log!("quest_id, {}", u128::from(quest_id));
+        let account_id = env::signer_account_id();
+
+        if call_result.is_err() {
+            log!("There was an error redeeming your rewards");
+            return false;
+        }
+
+        // let drop_info: JsonDrop = serde_json::from_str(&call_result.unwrap()).unwrap();
+        // let quest: Result<Quest, _> = drop_info.try_into();
+        //
+        // match quest {
+        //     Ok(quest) => {
+        //         let mut quest_ids_set = self
+        //             .quest_ids_by_deployer
+        //             .get(&account_id)
+        //             .unwrap_or_else(|| UnorderedSet::new(StorageKeys::QuestSet));
+        //         quest_ids_set.insert(&quest.quest_id);
+        //
+        //         self.quest_ids_by_deployer
+        //             .insert(&account_id, &quest_ids_set);
+        //         self.quest_by_id.insert(&quest.quest_id, &quest);
+        //         true
+        //     }
+        //     Err(e) => {
+        //         log!("There was an error creating your quest. {}", e);
+        //         false
+        //     }
+        // }
+    }
     pub fn set_global_freeze(&mut self, freeze: bool) {
         self.assert_owner_calling();
         self.global_freeze = freeze;
@@ -402,6 +408,46 @@ impl QuestProtocol {
 mod tests {
     use super::*;
 
+    // #[test]
+    // fn list_account_roles() {
+    //     let admins = vec![
+    //         AccountRole {
+    //             account_id: AccountId::new_unchecked("bob.near".to_string()),
+    //             role: Role::Owner,
+    //         },
+    //         AccountRole {
+    //             account_id: AccountId::new_unchecked("flatirons.near".to_string()),
+    //             role: Role::User,
+    //         },
+    //     ];
+    //     let contract = Contract {
+    //         registry: IndexersByAccount::new(StorageKeys::Registry),
+    //         account_roles: admins.clone(),
+    //     };
+    //     assert_eq!(contract.list_account_roles(), admins);
+    // }
+    #[test]
+    fn quest_creation_works() {
+        let contract = QuestProtocol::new(
+            "roshaan.near".to_string(),
+            "v2.keypom.near".to_string(),
+            QUESTS_PROTOCOL_PUBLIC_KEY_STR.to_string(),
+        );
+
+        let quest = Quest {
+            quest_id: U128(23902390239),
+            quest_type: RewardType::Native,
+            start_time: 5858585583,
+            end_time: 384484848484,
+            reward_config: None,
+            reward_amount: U128::from("239293092").unwrap(),
+            total_participants_allowed: 50,
+            indexer_config_id: "creator_quest".to_string(),
+        };
+
+        // contract.create_near_quest(quest.quest_id, quest.end_time, quest.start_time, total_participants_allowed, reward_amount, reward_type, indexer_config_id, quest_validator_public_key)
+        // }
+    }
     // Only the owner of the quest can delete the quest
     //
     // Unable to interact with contract when global freeze is on
