@@ -43,7 +43,7 @@ function fetch_step_one_data({}) {
       {
         name: "astrodao.near",
         actions: {
-          "join a dao": {
+          "join_dao": {
             dao_account_id: "<text_input>",
             role: "<text_input>",
           },

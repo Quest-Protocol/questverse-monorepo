@@ -1,26 +1,75 @@
+const { fetch_indexers_config } = VM.require(
+  "bos.questverse.near/widget/data.data_indexers"
+);
+const INDEXERS = fetch_indexers_config();
+
+function getRandomValue() {
+  return Math.floor(Math.random() * 2000000) + 1;
+}
+function replaceTemplateLiterals(code_string, dataObject) {
+  return code_string.replace(/{{(.*?)}}/g, (match, key) => {
+    return dataObject[key] !== undefined ? dataObject[key] : match;
+  });
+}
+function transformVariables(quest_id, selectedOption, selectedAction) {
+  const replacePattern = /[.\- ]/g;
+
+  quest_id = String(quest_id).replace(replacePattern, "_");
+  selectedOption = String(selectedOption).replace(replacePattern, "_");
+  selectedAction = String(selectedAction).replace(replacePattern, "_");
+
+  return `quest_${quest_id}_${selectedOption}_${selectedAction}`;
+}
 function handleFormComplete(value) {
+  const quest_id = getRandomValue();
+  console.log(value, "form");
+  const indexer_config =
+    INDEXERS[value.indexerConfig.selectedOption][
+    value.indexerConfig.selectedAction
+    ];
+  const new_code = replaceTemplateLiterals(indexer_config.code, value.formData);
+  console.log(indexer_config);
+
+  const indexer_name = transformVariables(
+    quest_id,
+    value.selectedOption,
+    value.selectedAction
+  );
   const questArgs = {
     args: {
-      quest_id: value.id,
-      title: value.form.title,
-      name: context.accountId,
+      quest_id: quest_id,
       starts_at: value.starts_at,
       expires_at: value.expires_at,
-      total_participants_allowed: value.numberOfParticipants,
-      indexer_name: value.total_participants_allowed,
-      description: value.description,
-      img_url: value.img_url,
+      total_participants_allowed: value.total_participants_allowed,
+      indexer_name: value.indexerConfig.indexerId,
+      title: value.form.title,
+      description: value.form.description,
+      img_url: value.form.img_url,
       tags: value.tags,
       humans_only: value.humans_only,
     },
   };
 
+  const gas = 200000000000000;
+
   Near.call([
+    {
+      contractName: "queryapi.dataplatform.near",
+      methodName: "register_indexer_function",
+      args: {
+        function_name: indexer_name,
+        code: new_code,
+        schema: indexer_config.schema,
+        filter_json: indexer_config.filter_json,
+        start_block_height: null,
+      },
+      gas,
+    },
     {
       contractName: "v0.questverse.near",
       methodName: "create_quest",
       args: questArgs.args,
-      deposit: (value.tokensAllocated + 0.02)*10^24,
+      deposit: (value.tokensAllocated + 0.02) * 1000000000000000000000000,
     },
   ]);
 }
@@ -91,7 +140,7 @@ let initialFormState = {
   date_end: "",
   indexerConfig: {
     selectedOption: "astrodao.near",
-    selectedAction: "join a dao",
+    selectedAction: "join_dao",
     formData: {},
     contractID: "",
     inputs: {
@@ -126,6 +175,8 @@ const handlePrevious = () => {
 };
 
 const handleStepComplete = (value) => {
+  console.log(value, "value");
+  console.log(state.form, "allvals");
   // const stepValid = true;
   // Object.keys(value).forEach((key) => {
   //   const properties = types["hack.near/type/quest"].properties.find(

@@ -5,8 +5,8 @@ const { fetch_step_three_data } = VM.require(
 const REWARDS_JSON = fetch_step_three_data();
 State.init({
   rewardToken: "NEAR",
-  tokensAllocated: 1,
-  numberOfParticipants: 10,
+  tokensAllocated: formState.tokensAllocated,
+  total_participants_allowed: formState.total_participants_allowed,
 });
 
 function handleRewardTokenChange(e) {
@@ -78,7 +78,7 @@ return (
       <input
         type="number"
         id="participantsAllowed"
-        value={state.numberOfParticipants}
+        value={state.total_participants_allowed}
         onChange={handleTotalParticipantsAllowed}
       />
     </div>
@@ -86,7 +86,7 @@ return (
     <div>
       <label htmlFor="rewardAmount">
         Reward Amount Per Participant:
-        {state.tokensAllocated / state.numberOfParticipants} {state.rewardToken}
+        {state.tokensAllocated / state.total_participants_allowed} {state.rewardToken}
       </label>
     </div>
     {renderFooter(state)}

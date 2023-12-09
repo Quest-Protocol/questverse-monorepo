@@ -28,6 +28,15 @@ const handleOptionsChange = (value) => {
   });
 };
 
+const handleInputChange = (value, fieldName) => {
+  State.update({
+    form: {
+      ...state.form,
+      formData: { ...state.form.formData, [fieldName]: value },
+    },
+  });
+};
+
 const onValueChange = (key, value) => {
   State.update({
     form: {
@@ -74,6 +83,10 @@ const renderActionsDropdown = () => {
 };
 
 const renderSubFields = (fields) => {
+  {
+    console.log(fields, "field");
+  }
+
   return (
     <div>
       <h3 className="h5 fw-bold p-2">Customize Quest</h3>
@@ -85,10 +98,10 @@ const renderSubFields = (fields) => {
               label: <>{field}</>,
               placeholder: field,
               size: "sm",
-              onChange: (v) => onValueChange("formData", v.target.value),
+              onChange: (event) => handleInputChange(event, field),
               error: errors["formData"],
               inputProps: {
-                name: "formData",
+                name: field,
                 defaultValue: state.form.formData[`${field}`],
               },
             }}
@@ -126,7 +139,7 @@ return (
             value: option.name,
           })),
           value: state.form.selectedOption || "",
-          onChange: (v) => handleOptionsChange(v.target.value),
+          onChange: (v) => handleOptionsChange(v),
         }}
       />
       {renderActionsDropdown()}
