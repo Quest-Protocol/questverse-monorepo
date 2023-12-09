@@ -1,0 +1,17 @@
+{
+  "name": "quest-indexer-templates",
+  "version": "1.0.0",
+  "description": "indexer templates for quest-indexers",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "generate": "node ./scripts/convert_to_json.js"
+  },
+  "keywords": [
+    "queryapi",
+    "near",
+    "indexers"
+  ],
+  "author": "roshaan",
+  "license": "ISC"
+}
