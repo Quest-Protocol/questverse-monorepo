@@ -1,176 +1,64 @@
-// Feed
-const type = props.type || "quest";
+const quests = Near.view("test1.questverse.near", "quests");
 
-const things = Social.keys(`*/${type}/*`, "final", {
-  return_type: "BlockHeight",
-});
-
-if (!things) {
-  return "Loading...";
+if (!quests) {
+  return "";
 }
 
-const Container = styled.div`
-  margin: 0 auto;
-  padding: 20px;
-  width: 100%;
-  max-width: 1200px;
+const Header = styled.div`
+  background: black;
 `;
 
-const Grid = styled.div`
-  display: grid;
-  grid-gap: 10px;
-  // grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+const Container = styled.div`
+  padding: 30px 0;
+  margin: 0;
+`;
 
-  // @media (min-width: 576px) {
-  //   grid-gap: 15px;
-  // }
-
-  // @media (min-width: 992px) {
-  //   grid-gap: 20px;
-  // }
-
-  > * {
-    transition: transform 0.3s ease; // Smooth transition for hover effect
-
-    &:hover {
-      transform: scale(1.03); // Subtle scale effect on hover
-    }
+const Toolbar = styled.div`
+  margin-left: 20px;
+  @media only screen and (max-width: 1061px) {
+    margin: 10px 0 0 0;
   }
 `;
 
-const processData = useCallback(
-  (data) => {
-    const accounts = Object.entries(data);
-
-    const allItems = accounts
-      .map((account) => {
-        const accountId = account[0];
-        return Object.entries(account[1][type]).map((kv) => {
-          return {
-            accountId,
-            type: type,
-            name: kv[0],
-            metadatadata: Social.get(
-              `${accountId}/${type}/${kv[0]}/metadata/**`,
-              "final"
-            ),
-          };
-        });
-      })
-      .flat();
-
-    // sort by latest
-    allItems.sort((a, b) => b.blockHeight - a.blockHeight);
-    return allItems;
-  },
-  [type]
-);
-
-// const items = processData(things);
-
-const items = Near.view("questsmock.near", "get_all_quests");
-
-if (!items) {
-  return "Loading data...";
-}
-
-if (items.length === 0) {
-  return `No items of type: "${type}" found.`;
-}
-
-function Item({ accountId, name, type, metadata }) {
-  return (
-    <Widget
-      src="/*__@appAccount__*//widget/components.quest.card"
-      props={{ questId: quest[0] }}
-    />
-  );
-  // // Use metadata.name if it exists, otherwise use the passed name
-  // const displayName = metadata.name || name;
-  // const defaultImage =
-  //   "https://ipfs.near.social/ipfs/bafkreihi3qh72njb3ejg7t2mbxuho2vk447kzkvpjtmulsb2njd6m2cfgi";
-
-  // return (
-  //   <div
-  //     className="card"
-  //     style={{
-  //       maxWidth: "100%",
-  //       height: "200px",
-  //       display: "flex",
-  //       flexDirection: "column",
-  //       justifyContent: "space-between",
-  //       overflow: "hidden",
-  //     }}
-  //   >
-  //     <div
-  //       className="card-img-top"
-  //       style={{
-  //         backgroundImage: `url(${metadata.backgroundImage || defaultImage})`,
-  //         height: "80px",
-  //         backgroundSize: "cover",
-  //         backgroundPosition: "center",
-  //       }}
-  //     />
-
-  //     <div className="card-body">
-  //       <Link
-  //         to={`/${accountId}/${type}/${name}`}
-  //         style={{ textDecoration: "none" }}
-  //       >
-  //         <h5 className="card-title">
-  //           {accountId}/{displayName}
-  //         </h5>
-  //       </Link>
-  //       {metadata.description && (
-  //         <p
-  //           className="card-text"
-  //           style={{ overflow: "hidden", textOverflow: "ellipsis" }}
-  //         >
-  //           {metadata.description}
-  //         </p>
-  //       )}
-  //     </div>
-  //     {context.accountId && (
-  //       <div
-  //         className="pb-2"
-  //         style={{ display: "flex", justifyContent: "flex-end", gap: "4px" }}
-  //       >
-  //         <Widget
-  //           src="mob.near/widget/N.StarButton"
-  //           props={{
-  //             notifyAccountId: accountId,
-  //             item: {
-  //               type: "social",
-  //               path: `${accountId}/${type}/${name}`,
-  //             },
-  //           }}
-  //         />
-  //         <Widget
-  //           src="mob.near/widget/N.LikeButton"
-  //           props={{
-  //             notifyAccountId: accountId,
-  //             item: {
-  //               type: "social",
-  //               path: `${accountId}/${type}/${name}`,
-  //             },
-  //           }}
-  //         />
-  //       </div>
-  //     )}
-  //   </div>
-  // );
-}
-
 return (
-  <Container>
-    <Widget
-      src="everycanvas.near/widget/ItemFeed"
-      props={{
-        items: items,
-        renderItem: Item,
-        perPage: 100,
-        renderLayout: (items) => <Grid>{items}</Grid>,
-      }}
-    />
-  </Container>
+  <>
+    <div>
+      <Header className="d-flex p-3 px-4 align-items-center rounded justify-content-between">
+        <h3 className="mt-2" style={{ fontFamily: "Courier", color: "white" }}>
+          <b>QuestVerse</b>
+        </h3>
+
+        {!isVerified ? (
+          <Widget
+            src="hack.near/widget/n.style"
+            props={{
+              Link: {
+                text: "Get Verified",
+                href: "https://i-am-human.app/",
+              },
+            }}
+          />
+        ) : (
+          <Toolbar>
+            <Widget src="hack.near/widget/start" />
+          </Toolbar>
+        )}
+      </Header>
+      <Container className="d-flex row justify-content-between w-100">
+        <h2 style={{ fontFamily: "Courier" }}>
+          <b>Discover</b>
+        </h2>
+
+        {quests.map((quest) => (
+          <div className="m-2">
+            <p>{JSON.stringify(quest[0])}</p>
+            <Widget
+              src="hack.near/widget/quest.card"
+              props={{ questId: quest.quest_id }}
+            />
+          </div>
+        ))}
+      </Container>
+    </div>
+  </>
 );
