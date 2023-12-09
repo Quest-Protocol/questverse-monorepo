@@ -1,5 +1,6 @@
 const accountId = props.accountId ?? context.accountId;
 const questId = props.questId ?? 3;
+const pageUrl = props.url ?? "/bos.questverse.near/widget/pages.Discover";
 
 const quest =
   props.quest ??
@@ -9,7 +10,7 @@ if (!quest) {
   return "quest data missing";
 }
 
-const questUrl = `/hack.near/widget/quest.page?questId=${questId}`;
+const questUrl = `/bos.questverse.near/widget/pages.QuestDetailsPage?questId=${questId}`;
 
 const isEligible = props.isEligible ?? true;
 
@@ -84,6 +85,7 @@ const amount = (quest.total_reward_amount / 1000000000000000000000000).toFixed(
 const indexer = quest.indexer_name;
 
 const openClaims = quest.total_participants_allowed - quest.num_claimed_rewards;
+
 return (
   <>
     <Card>
@@ -122,7 +124,7 @@ return (
                       className="me-1 fw-light badge border border-secondary text-bg-light"
                     >
                       <a
-                        href={`/hack.near/widget/quests?tag=${tag}`}
+                        href={`${pageUrl}?tag=${tag}`}
                         style={{ textDecoration: "none" }}
                         className="no-text-decoration"
                       >
@@ -137,7 +139,10 @@ return (
           <div className="d-flex flex-row me-3">
             <Widget
               src="hack.near/widget/tags"
-              props={{ path: `${quest.creator}/quest/${quest.quest_id}` }}
+              props={{
+                path: `${quest.creator}/quest/${quest.quest_id}`,
+                url: "/bos.questverse.near/widget/pages.Discover",
+              }}
             />
           </div>
         </div>

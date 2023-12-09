@@ -4,6 +4,60 @@ if (!quests) {
   return "";
 }
 
+const tag = props.tag ?? "*";
+
+const data = Social.keys(`*/graph/context/*/quest/*/tags/${tag}`, "final");
+
+if (!data) {
+  return "Loading...";
+}
+
+function extractThings(data) {
+  const uniqueKeys = new Set();
+  const things = [];
+
+  Object.keys(data).forEach((curatorId) => {
+    const context = data[curatorId]?.graph?.context;
+
+    if (context) {
+      Object.keys(context).forEach((creatorId) => {
+        const namespaces = context[creatorId];
+
+        if (namespaces) {
+          Object.keys(namespaces).forEach((namespace) => {
+            const thingData = namespaces[namespace];
+
+            if (thingData) {
+              Object.keys(thingData).forEach((thingId) => {
+                const key = `${creatorId}-${namespace}-${thingId}`;
+                const questId =
+                  data["hack.near"]?.graph?.context?.["hack.near"]?.quest?.[
+                    key
+                  ];
+
+                if (!uniqueKeys.has(key)) {
+                  uniqueKeys.add(key);
+
+                  things.push(
+                    <div key={key}>
+                      <Widget
+                        src="hack.near/widget/quest.card"
+                        props={{ questId }}
+                      />
+                    </div>
+                  );
+                }
+              });
+            }
+          });
+        }
+      });
+    }
+  });
+
+  return things;
+}
+
 const Header = styled.div`
   background: black;
 `;
@@ -48,16 +102,33 @@ return (
         <h2 style={{ fontFamily: "Courier" }}>
           <b>Discover</b>
         </h2>
-
-        {quests.map((quest) => (
-          <div className="m-2">
-            <p>{JSON.stringify(quest[0])}</p>
-            <Widget
-              src="hack.near/widget/quest.card"
-              props={{ questId: quest.quest_id }}
-            />
+        <div>
+          <Widget
+            src="hack.near/widget/every.tag"
+            props={{
+              tag,
+              namespace: "quest",
+              url: "bos.questverse.near/widget/pages.Discover",
+            }}
+          />
+        </div>
+        {tag === "*" ? (
+          <div>
+            {quests.map((quest) => (
+              <div className="m-2">
+                <Widget
+                  src="hack.near/widget/quest.card"
+                  props={{
+                    questId: quest.quest_id,
+                    url: "bos.questverse.near/widget/pages.Discover",
+                  }}
+                />
+              </div>
+            ))}
           </div>
-        ))}
+        ) : (
+          <div className="m-2">{extractThings(data)}</div>
+        )}
       </Container>
     </div>
   </>
