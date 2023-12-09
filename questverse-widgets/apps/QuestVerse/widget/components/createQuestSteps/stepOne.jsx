@@ -1,95 +1,89 @@
-// import TYPES from "./types.json"
-const TYPES = props.data;
-console.log('types', TYPES);
-// function formatDate(date) {
-//   const year = date.getFullYear();
-//   const month = (date.getMonth() + 1).toString().padStart(2, "0");
-//   const day = date.getDate().toString().padStart(2, "0");
-//   return [year, month, day].join("-");
-// }
-
-// const TODAY = formatDate(new Date());
-// const DAY_IN_SECONDS = 24 * 60 * 60 * 1000;
+const JSON = props.data;
+const options = JSON.options;
 
 State.init({
-  selectedCurrency: null,
   selectedOption: null,
-  selectedFields: [],
+  selectedAction: null,
+  formData: {},
 });
 
-function handleCurrencyChange(e) {
-  State.update({
-    selectedCurrency: e.target.value,
-    selectedOption: null,
-    selectedFields: [],
-  });
-}
-
-function handleOptionChange(e) {
-  console.log(e.target.value);
-  const currency = TYPES.project_types[0].crypto_currencies.find(
-    (crypto) => crypto.name === state.selectedCurrency
-  );
-  const action = currency.actions[e.target.value];
+const handleOptionChange = (e) => {
   State.update({
     selectedOption: e.target.value,
-    selectedFields: action.fields,
+    selectedAction: null,
+    formData: {},
   });
-}
+};
+
+const handleActionChange = (e) => {
+  State.update({
+    selectedAction: e.target.value,
+    formData: {},
+  });
+};
+
+const handleInputChange = (e, fieldName) => {
+  const value = e.target.value;
+  State.update({
+    formData: { ...state.formData, [fieldName]: value },
+  });
+};
+
+const renderActionsDropdown = () => {
+  if (state.selectedOption !== null) {
+    const selectedOptionObj = options.find(
+      (option) => option.name === state.selectedOption
+    );
+    if (selectedOptionObj && selectedOptionObj.actions) {
+      const actions = Object.keys(selectedOptionObj.actions);
+      return (
+        <div>
+          <label>Select Action:</label>
+          <select onChange={handleActionChange} value={state.selectedAction || ""}>
+            <option value="">Select Action</option>
+            {actions.map((action, index) => (
+              <option key={index} value={action}>
+                {action}
+              </option>
+            ))}
+          </select>
+          {state.selectedAction &&
+            renderSubFields(selectedOptionObj.actions[state.selectedAction])}
+        </div>
+      );
+    }
+  }
+  return null;
+};
+
+const renderSubFields = (fields) => {
+  return (
+    <div>
+      {Object.keys(fields).map((field, index) => (
+        <div key={index}>
+          <label>{field}</label>
+          <input
+            type="text"
+            placeholder={fields[field]}
+            onChange={(event) => handleInputChange(event, field)}
+          />
+        </div>
+      ))}
+    </div>
+  );
+};
 
 return (
   <div>
-    <div className="stepOne">
-      {/* <form action="123" onSubmit="..."> */}
-      <label htmlFor="currency">Select Currency:</label>
-      <select id="currency" onChange={handleCurrencyChange}>
-        <option value="">Select</option>
-        {TYPES.project_types[0].crypto_currencies.map((crypto) => (
-          <option key={crypto.name} value={crypto.name}>
-            {crypto.name}
-          </option>
-        ))}
-      </select>
-
-      {state.selectedCurrency && (
-        <div>
-          <label htmlFor="option">Select Option:</label>
-          <select id="option" onChange={handleOptionChange}>
-            <option value="">Select</option>
-            {TYPES.project_types[0].crypto_currencies
-              .find((crypto) => crypto.name === state.selectedCurrency)
-              .options.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-          </select>
-        </div>
-      )}
-      {state.selectedFields.length > 0 && (
-        <div>
-          {state.selectedFields.map((field, index) => (
-            <div key={index}>
-              <label htmlFor={field.name}>{field.name}:</label>
-              <select id={field.name}>
-                <option value="">Select</option>
-                {field.options.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ))}
-        </div>
-      )}
-      {/* </form> */}
-      {/* <button type="submit"> Submit</button> */}
-    </div>
+    <label>Select Option:</label>
+    <select onChange={handleOptionChange} value={state.selectedOption || ""}>
+      <option value="">Select Option</option>
+      {options.map((option, index) => (
+        <option key={index} value={option.name}>
+          {option.name}
+        </option>
+      ))}
+    </select>
+    {renderActionsDropdown()}
   </div>
 );
-//creation ->
-
-/**
- Import components to turn it into a carosel
- */

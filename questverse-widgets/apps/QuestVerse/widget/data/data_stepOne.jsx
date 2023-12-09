@@ -1,78 +1,108 @@
 function fetch_step_one_data({}) {
   return {
-    project_types: [
+    options: [
       {
-        name: "Crypto Currency",
-        crypto_currencies: [
-          {
-            name: "Bitcoin",
-            options: ["Lend", "Bridge"],
-            actions: {
-              Lend: {
-                fields: [
-                  {
-                    name: "network",
-                    type: "dropdown",
-                    options: ["Option 1", "Option 2", "Option 3"],
-                  },
-                ],
-              },
-              Bridge: {
-                fields: [
-                  {
-                    name: "from",
-                    type: "dropdown",
-                    options: ["Option A", "Option B", "Option C"],
-                  },
-                  {
-                    name: "to",
-                    type: "dropdown",
-                    options: ["Option X", "Option Y", "Option Z"],
-                  },
-                  {
-                    name: "dropdown_type",
-                    type: "dropdown",
-                    options: ["Type 1", "Type 2", "Type 3"],
-                  },
-                ],
-              },
-            },
+        name: "ALL",
+        actions: {
+          "interaction on contract": {
+            account_id: "<text_input>",
+            number_of_interactions: "<number_input>",
           },
-          {
-            name: "NEAR",
-            options: ["Bridge"],
-            actions: {
-              Lend: {
-                fields: [
-                  {
-                    name: "network",
-                    type: "dropdown",
-                    options: ["Option 50", "Option 500", "Option 500"],
-                  },
-                ],
-              },
-              Bridge: {
-                fields: [
-                  {
-                    name: "from",
-                    type: "dropdown",
-                    options: ["Option 0", "Option 00", "Option 000"],
-                  },
-                  {
-                    name: "to",
-                    type: "dropdown",
-                    options: ["Option XXX", "Option YYY", "Option ZZZ"],
-                  },
-                  {
-                    name: "dropdown_type",
-                    type: "dropdown",
-                    options: ["Type 111", "Type 222", "Type 333"],
-                  },
-                ],
-              },
-            },
+          "interaction for specific method on contract": {
+            account_id: "<text_input>",
+            method_name: "<text_input>",
+            number_of_interactions: "<number_input>",
           },
-        ],
+          transfer: {
+            account_id: "<text_input>",
+            near_amount: "<number_input>",
+          },
+        },
+      },
+      {
+        name: "social.near",
+        actions: {
+          "follow a user": {
+            user: "<text_input>",
+          },
+          "like a post": {
+            post_id: "<number_input>",
+          },
+          repost: {
+            post_id: "<number_input>",
+          },
+          "use hash tag in post": {
+            hash_tag: "<text_input>",
+          },
+          "comment on a post": {
+            post_id: "<number_input>",
+          },
+          // "complete widget metadata information": {},
+        },
+      },
+      {
+        name: "astrodao.near",
+        actions: {
+          "join a dao": {
+            dao_account_id: "<text_input>",
+            role: "<text_input>",
+          },
+          "vote on proposal": {
+            dao_account_id: "<text_input>",
+            proposal_id: "<number_input>",
+          },
+        },
+      },
+      {
+        name: "near horizon",
+        actions: {
+          "propose a contribution": {
+            project_name: "<input_text>",
+          },
+        },
+      },
+      {
+        name: "devgogs.near",
+        actions: {
+          "post a solution": {
+            get_number_likes: "<number_input>",
+          },
+          "reply to a post": {
+            id: "<number_input>",
+          },
+          "interact with community": {
+            community_name: "<text_input>",
+          },
+          "fund a project": {
+            "greater than": "<number_input>",
+            "less than": "<number_input>",
+            equal: "<number_input>",
+          },
+        },
+      },
+      {
+        name: "Mintbase",
+        actions: {
+          "Buy NFT from Mintbase": {
+            // account_id: "<text_input>",
+            // number_of_interactions: "<number_input>",
+          },
+          "List NFT on Mintbase": {
+            // account_id: "<text_input>",
+            // method_name: "<text_input>",
+            // number_of_interactions: "<number_input>",
+          },
+          "Create a collection on Mintbase": {
+            // account_id: "<text_input>",
+            // near_amount: "<number_input>",
+          },
+        },
+      },
+      {
+        name: "Paras",
+        actions: {
+          "Buy NFT from Paras": {},
+        },
       },
     ],
   };
