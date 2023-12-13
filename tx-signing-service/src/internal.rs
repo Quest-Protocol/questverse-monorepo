@@ -3,19 +3,35 @@ use near_primitives::types::AccountId;
 use std::env;
 use std::error::Error;
 use std::str::FromStr;
+use tracing::{error, info};
 
 /// given a payload, `sign_claim` pulls the Secret Key and Account ID from environment and uses
 /// an in-memory signer
 pub(crate) fn sign_claim(payload: &[u8]) -> Result<Signature, Box<dyn Error>> {
-    let secret_key = env::var("SECRET_KEY")?;
-    let secret_key = SecretKey::from_str(&secret_key)?;
+    info!("Signing claim");
+
+    let secret_key = match env::var("SECRET_KEY") {
+        Ok(key) => key,
+        Err(_) => {
+            error!("SECRET_KEY environment variable not found");
+            return Err("SECRET_KEY not found".into());
+        }
+    };
+
+    let secret_key = match SecretKey::from_str(&secret_key) {
+        Ok(key) => key,
+        Err(e) => {
+            error!("Failed to parse SECRET_KEY: {}", e);
+            return Err(e.into());
+        }
+    };
 
     let account_id = env::var("ACCOUNT_ID").unwrap_or("v1.questverse.near".to_string());
     let account_id = AccountId::from_str(&account_id)?;
 
     let signer = InMemorySigner::from_secret_key(account_id, secret_key);
 
-    Ok(signer.sign(payload))
+    Ok(signer.sign(&payload))
 }
 
 #[cfg(test)]

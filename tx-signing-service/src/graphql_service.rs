@@ -1,12 +1,10 @@
-use crate::internal::sign_claim;
-use crate::{
-    QuestConditionQuery, QuestState, QuestStateError, QuestValidationInfo, QuestValidationRequest,
-};
+use crate::{QuestConditionQuery, QuestState, QuestStateError, QuestValidationRequest};
 use dotenv::dotenv;
 use reqwest::header::HeaderValue;
 use reqwest::{header::HeaderMap, Client};
 use serde_json::{json, Value};
 use std::env;
+use tracing::{error, info, instrument};
 
 fn build_table_name(indexer_config_id: &str) -> String {
     indexer_config_id.replace(".", "_").replace("%", "_") + "_quest_tracker"
@@ -25,11 +23,27 @@ fn build_query(table_name: &str, account_id: &str) -> String {
     )
 }
 
+#[instrument]
 async fn fetch_response(query: String) -> Result<Value, QuestStateError> {
     dotenv().ok();
 
-    let query_api_url = env::var("QUERY_API").expect("QUERY_API not found in .env file");
-    let header_role = env::var("HEADER_ROLE").expect("HEADER_ROLE not found in .env file");
+    let query_api_url = if let Ok(var) = env::var("QUERY_API") {
+        var
+    } else {
+        error!("QUERY_API environment variable is not set");
+        return Err(QuestStateError::ConfigError(
+            "QUERY_API not set".to_string(),
+        ));
+    };
+
+    let header_role = if let Ok(var) = env::var("HEADER_ROLE") {
+        var
+    } else {
+        error!("HEADER_ROLE environment variable is not set");
+        return Err(QuestStateError::ConfigError(
+            "HEADER_ROLE not set".to_string(),
+        ));
+    };
 
     let client = Client::new();
     let mut headers = HeaderMap::new();
@@ -42,18 +56,19 @@ async fn fetch_response(query: String) -> Result<Value, QuestStateError> {
         .send()
         .await?;
 
-    res.json::<Value>()
-        .await
-        .map_err(|e| QuestStateError::ReqwestError(e.into()))
+    res.json::<Value>().await.map_err(|e| {
+        error!("Failed to fetch response: {}", e);
+        QuestStateError::ReqwestError(e.into())
+    })
 }
 
 /// given an indexer_config_id, `check_quest` queries the graphql client to check a quest's condition
+#[instrument]
 pub(crate) async fn check_quest(
     validation_request: &QuestValidationRequest,
 ) -> Result<QuestState, QuestStateError> {
     let indexer_config_id = &validation_request.indexer_config_id;
     let account_id = &validation_request.account_id;
-    let quest_id = &validation_request.quest_id;
 
     let table_name = build_table_name(indexer_config_id);
     let query = build_query(&table_name, account_id);
@@ -70,37 +85,31 @@ pub(crate) async fn check_quest(
 
     match &quest_snapshot.is_completed {
         true => {
-            let payload = serde_json::to_string(&QuestValidationInfo {
-                account_id: account_id.clone(),
-                quest_id: quest_id.clone(),
-            })
-            .unwrap()
-            .into_bytes();
+            info!("Quest completed: {}", quest_snapshot.account_id);
 
-            let claim_response = sign_claim(&payload);
-
-            match claim_response {
-                Ok(signature) => Ok(QuestState::Completed(
-                    "Quest has been completed!".to_string(),
-                    signature,
-                )),
-                Err(e) => Err(QuestStateError::ClaimError(e.to_string())),
-            }
+            Ok(QuestState::Completed(
+                "Quest has been completed".to_string(),
+            ))
         }
-        false => Ok(QuestState::NotCompleted(
-            "Quest has not been completed".to_string(),
-            QuestConditionQuery {
-                account_id: quest_snapshot.account_id.clone(),
-                block_height: quest_snapshot.block_height,
-                is_completed: quest_snapshot.is_completed,
-            },
-        )),
+        false => {
+            info!("Quest not completed {}", quest_snapshot.account_id);
+
+            Ok(QuestState::NotCompleted(
+                "Quest has not been completed".to_string(),
+                QuestConditionQuery {
+                    account_id: quest_snapshot.account_id.clone(),
+                    block_height: quest_snapshot.block_height,
+                    is_completed: quest_snapshot.is_completed,
+                },
+            ))
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::QuestValidationInfo;
     use std::path::Path;
     use tokio::test as tokio_test;
 
@@ -191,7 +200,7 @@ mod tests {
             assert!(result.is_ok(), "Error checking quest: {:?}", result.err());
 
             match result.unwrap() {
-                QuestState::Completed(_, _) if completed_status => {} // If completed_status is true, expect Completed
+                QuestState::Completed(_) if completed_status => {} // If completed_status is true, expect Completed
                 QuestState::NotCompleted(_, _) if !completed_status => {} // If completed_status is false, expect NotCompleted
                 _ => panic!("Quest state does not match expected completed status"),
             }
