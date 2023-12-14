@@ -1,7 +1,4 @@
-use crate::internal::sign_claim;
-use crate::{
-    QuestConditionQuery, QuestState, QuestStateError, QuestValidationInfo, QuestValidationRequest,
-};
+use crate::{QuestConditionQuery, QuestState, QuestStateError, QuestValidationRequest};
 use dotenv::dotenv;
 use reqwest::header::HeaderValue;
 use reqwest::{header::HeaderMap, Client};
@@ -53,7 +50,6 @@ pub(crate) async fn check_quest(
 ) -> Result<QuestState, QuestStateError> {
     let indexer_config_id = &validation_request.indexer_config_id;
     let account_id = &validation_request.account_id;
-    let quest_id = &validation_request.quest_id;
 
     let table_name = build_table_name(indexer_config_id);
     let query = build_query(&table_name, account_id);
@@ -69,24 +65,9 @@ pub(crate) async fn check_quest(
     };
 
     match &quest_snapshot.is_completed {
-        true => {
-            let payload = serde_json::to_string(&QuestValidationInfo {
-                account_id: account_id.clone(),
-                quest_id: quest_id.clone(),
-            })
-            .unwrap()
-            .into_bytes();
-
-            let claim_response = sign_claim(&payload);
-
-            match claim_response {
-                Ok(signature) => Ok(QuestState::Completed(
-                    "Quest has been completed!".to_string(),
-                    signature,
-                )),
-                Err(e) => Err(QuestStateError::ClaimError(e.to_string())),
-            }
-        }
+        true => Ok(QuestState::Completed(
+            "Quest has been completed".to_string(),
+        )),
         false => Ok(QuestState::NotCompleted(
             "Quest has not been completed".to_string(),
             QuestConditionQuery {
@@ -101,6 +82,7 @@ pub(crate) async fn check_quest(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::QuestValidationInfo;
     use std::path::Path;
     use tokio::test as tokio_test;
 
@@ -191,7 +173,7 @@ mod tests {
             assert!(result.is_ok(), "Error checking quest: {:?}", result.err());
 
             match result.unwrap() {
-                QuestState::Completed(_, _) if completed_status => {} // If completed_status is true, expect Completed
+                QuestState::Completed(_) if completed_status => {} // If completed_status is true, expect Completed
                 QuestState::NotCompleted(_, _) if !completed_status => {} // If completed_status is false, expect NotCompleted
                 _ => panic!("Quest state does not match expected completed status"),
             }
