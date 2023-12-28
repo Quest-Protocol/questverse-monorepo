@@ -21,8 +21,8 @@ pub struct QuestUsage {
 #[derive(BorshSerialize, BorshDeserialize, Deserialize, Serialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct Claim {
-    pub account_id: String,
-    pub quest_id: String,
+    pub account_id: AccountId,
+    pub quest_id: u64,
 }
 
 #[allow(non_camel_case_types)]
