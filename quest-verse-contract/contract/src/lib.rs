@@ -1,8 +1,8 @@
-use constants::CLAIM_REWARD_GAS;
+use constants::{CLAIM_REWARD_GAS, SIGNATURE_LEN};
 // Find all our documentation at https://docs.near.org
 use keypom_models::*;
 
-use ed25519_dalek::{Signature, Verifier};
+use ed25519_dalek::{Signature, Verifier, PUBLIC_KEY_LENGTH};
 use near_sdk::base64;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap, UnorderedMap, UnorderedSet};
@@ -307,9 +307,18 @@ impl QuestProtocol {
         require!(self.global_freeze == false, "the contract is frozen");
     }
 
-    pub fn verify_claim(&self, claim_sig: &Vec<u8>, claim: &Vec<u8>, public_key: &[u8]) -> bool {
+    pub fn verify_claim(
+        &self,
+        claim_sig: &Vec<u8>,
+        claim: &Vec<u8>,
+        public_key: &[u8; PUBLIC_KEY_LENGTH],
+    ) -> bool {
         let public_key = ed25519_dalek::PublicKey::from_bytes(public_key).unwrap();
-        match Signature::from_bytes(&claim_sig) {
+        let sig: &[u8; SIGNATURE_LEN] = claim_sig
+            .as_slice()
+            .try_into()
+            .expect("signature must be 64 bytes");
+        match Signature::from_bytes(sig) {
             Ok(sig) => public_key.verify(&claim, &sig).is_ok(),
             Err(_) => false,
         }
@@ -406,11 +415,11 @@ mod unit_tests {
 
     fn sign_claim(c: &Claim, k: &Keypair) -> (String, String) {
         let claim_bytes = c.try_to_vec().unwrap();
-        let sig = k.sign(&claim_bytes);
+        let sig: Signature = k.sign(&claim_bytes);
         let sig_bytes = sig.to_bytes();
         (
-            near_sdk::base64::encode(claim_bytes),
-            near_sdk::base64::encode(sig_bytes.to_vec()),
+            base64::encode(claim_bytes),
+            base64::encode(sig_bytes.to_vec()),
         )
     }
 
@@ -461,7 +470,49 @@ mod unit_tests {
         let (claim_base64, sig_base64) = sign_claim(&claim, &keypair);
         let decoded_claim = base64::decode(claim_base64).unwrap();
         let decoded_sig = base64::decode(sig_base64).unwrap();
-        ctr.verify_claim(&decoded_claim, &decoded_sig, &public_key);
+        let res = ctr.verify_claim(&decoded_sig, &decoded_claim, &public_key);
+        assert!(res, "res {}", res);
+    }
+
+    #[test]
+    fn verify_claim_false_signer() {
+        let keypair = generate_keypair();
+        let public_key = keypair.public.to_bytes();
+        let (_, ctr) = setup(&alice(), Some(base64::encode(public_key.to_vec())));
+        let claim = Claim {
+            account_id: alice(),
+            quest_id: 1,
+        };
+        let (claim_base64, sig_base64) = sign_claim(&claim, &keypair);
+        let decoded_claim = base64::decode(claim_base64).unwrap();
+        let decoded_sig = base64::decode(sig_base64).unwrap();
+        let false_keypair = generate_keypair();
+        let res = ctr.verify_claim(
+            &decoded_sig,
+            &decoded_claim,
+            &false_keypair.public.to_bytes(),
+        );
+        assert!(!res, "res {}", res);
+    }
+
+    #[test]
+    fn verify_claim_false_claim() {
+        let keypair = generate_keypair();
+        let public_key = keypair.public.to_bytes();
+        let (_, ctr) = setup(&alice(), Some(base64::encode(public_key.to_vec())));
+        let claim = Claim {
+            account_id: alice(),
+            quest_id: 1,
+        };
+        let false_claim = Claim {
+            account_id: alice(),
+            quest_id: 2,
+        };
+        let (_, sig_base64) = sign_claim(&claim, &keypair);
+        let false_claim_bytes = false_claim.try_to_vec().unwrap();
+        let decoded_sig = base64::decode(sig_base64).unwrap();
+        let res = ctr.verify_claim(&decoded_sig, &false_claim_bytes, &public_key);
+        assert!(!res, "res {}", res);
     }
 
     // Only the owner of the quest can delete the quest
