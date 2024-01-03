@@ -1,10 +1,8 @@
-use std::str::FromStr;
-
-use constants::CLAIM_REWARD_GAS;
+use constants::{CLAIM_REWARD_GAS, SIGNATURE_LEN};
 // Find all our documentation at https://docs.near.org
 use keypom_models::*;
 
-use ed25519_dalek::{Signature, Verifier};
+use ed25519_dalek::{Signature, Verifier, PUBLIC_KEY_LENGTH};
 use near_sdk::base64;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap, UnorderedMap, UnorderedSet};
@@ -17,8 +15,8 @@ use storage::StorageKeys;
 use types::{Claim, QuestId};
 pub mod external;
 mod storage;
-use crate::constants::QUESTS_PROTOCOL_PUBLIC_KEY_STR;
 pub use crate::external::*;
+use crate::utils::pubkey_from_b64;
 mod constants;
 mod keypom_models;
 mod quest;
@@ -36,7 +34,7 @@ pub struct QuestProtocol {
     /// Quests by a quest_id
     quest_by_id: UnorderedMap<QuestId, Quest>,
     /// claim signer public key. This key will be used to authenticate claims.
-    claim_signer_public_key: PublicKey,
+    claim_signer_public_key: [u8; 32], // Vec<u8>,
     /// pause contract activity
     global_freeze: bool,
     /// users -> claimed quests
@@ -53,16 +51,11 @@ impl QuestProtocol {
     pub fn new(
         admin: AccountId,
         sbt_registry: AccountId,
-        claim_signer_pk: Option<String>,
+        claim_signer_pk: String,
         quest_fee: u64,
     ) -> Self {
         require!(quest_fee < 100);
-        let claim_signer_public_key: PublicKey;
-        if claim_signer_pk.is_some() {
-            claim_signer_public_key = claim_signer_pk.unwrap().parse().unwrap();
-        } else {
-            claim_signer_public_key = QUESTS_PROTOCOL_PUBLIC_KEY_STR.parse().unwrap();
-        }
+        let claim_signer_public_key = pubkey_from_b64(claim_signer_pk);
         Self {
             admin,
             sbt_registry,
@@ -165,19 +158,18 @@ impl QuestProtocol {
         Promise::new(caller).transfer(refund)
     }
 
-    pub fn claim_reward(&mut self, claim: Claim, signature: String) -> Promise {
+    pub fn claim_reward(&mut self, claim_b64: String, sig_b64: String) -> Promise {
         self.assert_not_frozen();
         let caller = env::predecessor_account_id();
-        let quest_id = claim
-            .quest_id
-            .parse::<u64>()
-            .expect("error parsing quest_id");
-        self.assert_not_claimed(quest_id);
-        self.assert_quest_in_progress(quest_id);
+        let claim_bytes = base64::decode(claim_b64).unwrap();
+        let sig_bytes = base64::decode(sig_b64).unwrap();
+        let claim = Claim::try_from_slice(&claim_bytes).unwrap();
+        self.assert_not_claimed(claim.quest_id);
+        self.assert_quest_in_progress(claim.quest_id);
 
-        self.verify_claim(claim, signature);
+        self.verify_claim(&sig_bytes, &claim_bytes, &self.claim_signer_public_key);
 
-        let mut quest = self.quest_by_id.get(&quest_id).unwrap();
+        let mut quest = self.quest_by_id.get(&claim.quest_id).unwrap();
         if quest.humans_only {
             // Call SBT registry to verify IAH and cast the upvote in callback
             ext_sbtreg::ext(self.sbt_registry.clone())
@@ -185,14 +177,15 @@ impl QuestProtocol {
                 .then(
                     Self::ext(env::current_account_id())
                         .with_static_gas(CLAIM_REWARD_GAS)
-                        .on_claim_reward_verified(quest_id, caller),
+                        .on_claim_reward_verified(claim.quest_id, caller),
                 )
         } else {
             // Update the state
-            self.claimed_quests.insert(&(caller.clone(), quest_id));
+            self.claimed_quests
+                .insert(&(caller.clone(), claim.quest_id));
             quest.num_claimed_rewards += 1;
             quest.participants.push(caller.clone());
-            self.quest_by_id.insert(&quest_id, &quest);
+            self.quest_by_id.insert(&claim.quest_id, &quest);
 
             let reward_per_user =
                 quest.total_reward_amount / quest.total_participants_allowed as u128;
@@ -202,40 +195,40 @@ impl QuestProtocol {
         }
     }
 
-    pub fn claim_reward_unverified(&mut self, claim: Claim, signature: String) -> Promise {
-        self.assert_not_frozen();
-        let caller = env::predecessor_account_id();
-        let quest_id = claim
-            .quest_id
-            .parse::<u64>()
-            .expect("error parsing quest_id");
-        self.assert_not_claimed(quest_id);
-        self.assert_quest_in_progress(quest_id);
+    // pub fn claim_reward_unverified(&mut self, claim: Claim, signature: String) -> Promise {
+    //     self.assert_not_frozen();
+    //     let caller = env::predecessor_account_id();
+    //     let quest_id = claim
+    //         .quest_id
+    //         .parse::<u64>()
+    //         .expect("error parsing quest_id");
+    //     self.assert_not_claimed(quest_id);
+    //     self.assert_quest_in_progress(quest_id);
 
-        let mut quest = self.quest_by_id.get(&quest_id).unwrap();
-        if quest.humans_only {
-            // Call SBT registry to verify IAH and cast the upvote in callback
-            ext_sbtreg::ext(self.sbt_registry.clone())
-                .is_human(caller.clone())
-                .then(
-                    Self::ext(env::current_account_id())
-                        .with_static_gas(CLAIM_REWARD_GAS)
-                        .on_claim_reward_verified(quest_id, caller),
-                )
-        } else {
-            // Update the state
-            self.claimed_quests.insert(&(caller.clone(), quest_id));
-            quest.num_claimed_rewards += 1;
-            quest.participants.push(caller.clone());
-            self.quest_by_id.insert(&quest_id, &quest);
+    //     let mut quest = self.quest_by_id.get(&quest_id).unwrap();
+    //     if quest.humans_only {
+    //         // Call SBT registry to verify IAH and cast the upvote in callback
+    //         ext_sbtreg::ext(self.sbt_registry.clone())
+    //             .is_human(caller.clone())
+    //             .then(
+    //                 Self::ext(env::current_account_id())
+    //                     .with_static_gas(CLAIM_REWARD_GAS)
+    //                     .on_claim_reward_verified(quest_id, caller),
+    //             )
+    //     } else {
+    //         // Update the state
+    //         self.claimed_quests.insert(&(caller.clone(), quest_id));
+    //         quest.num_claimed_rewards += 1;
+    //         quest.participants.push(caller.clone());
+    //         self.quest_by_id.insert(&quest_id, &quest);
 
-            let reward_per_user =
-                quest.total_reward_amount / quest.total_participants_allowed as u128;
+    //         let reward_per_user =
+    //             quest.total_reward_amount / quest.total_participants_allowed as u128;
 
-            // Send the reward to the user
-            Promise::new(caller).transfer(reward_per_user)
-        }
-    }
+    //         // Send the reward to the user
+    //         Promise::new(caller).transfer(reward_per_user)
+    //     }
+    // }
 
     pub fn admin_freeze(&mut self) {
         self.assert_admin();
@@ -257,9 +250,9 @@ impl QuestProtocol {
         self.admin = new_admin;
     }
 
-    pub fn admin_set_claim_signer(&mut self, new_signer: PublicKey) {
+    pub fn admin_set_claim_signer(&mut self, new_signer: String) {
         self.assert_admin();
-        self.claim_signer_public_key = new_signer;
+        self.claim_signer_public_key = pubkey_from_b64(new_signer);
     }
 
     pub fn admin_update_indexer_name(&mut self, quest_id: QuestId, indexer_name: String) {
@@ -314,22 +307,20 @@ impl QuestProtocol {
         require!(self.global_freeze == false, "the contract is frozen");
     }
 
-    /// Method that takes the quest_id and signed_claim_receipt and verifies it against the public key of the signing_serice
-    fn verify_claim(&self, claim: Claim, signature: String) {
-        let serialized_claim = serde_json::to_string(&claim).expect("failed to serialize claim");
-        // we are skipping the beggining 'ed25519:'
-        // let signature_bytes = base64::decode(&signature[9..]).expect("failed to decode signature");
-
-        // let public_key = PublicKey::from_bytes(&public_key_bytes).expect("invalid public key"); -
-        let signature: Signature =
-            Signature::from_str(&signature).expect("failed to create signature");
-
-        let public_key =
-            ed25519_dalek::PublicKey::from_bytes(self.claim_signer_public_key.as_bytes())
-                .expect("failed to create public key from bytes");
-
-        if let Err(err) = public_key.verify(serialized_claim.as_bytes(), &signature) {
-            panic!("signature verification failed: {}", err);
+    pub fn verify_claim(
+        &self,
+        claim_sig: &Vec<u8>,
+        claim: &Vec<u8>,
+        public_key: &[u8; PUBLIC_KEY_LENGTH],
+    ) -> bool {
+        let public_key = ed25519_dalek::PublicKey::from_bytes(public_key).unwrap();
+        let sig: &[u8; SIGNATURE_LEN] = claim_sig
+            .as_slice()
+            .try_into()
+            .expect("signature must be 64 bytes");
+        match Signature::from_bytes(sig) {
+            Ok(sig) => public_key.verify(&claim, &sig).is_ok(),
+            Err(_) => false,
         }
     }
 
@@ -369,6 +360,10 @@ impl QuestProtocol {
 mod unit_tests {
     use near_sdk::{test_utils::VMContextBuilder, testing_env, VMContext, ONE_NEAR};
 
+    extern crate ed25519_dalek;
+    extern crate rand;
+    use ed25519_dalek::{Keypair, Signer};
+
     use super::*;
 
     /// 1ms in nano seconds
@@ -395,35 +390,55 @@ mod unit_tests {
         AccountId::new_unchecked("registry.near".to_string())
     }
 
-    fn setup(predecessor: &AccountId) -> (VMContext, QuestProtocol) {
+    fn generate_keypair() -> Keypair {
+        Keypair::generate(&mut rand::thread_rng())
+    }
+
+    fn setup(predecessor: &AccountId, signer_pk: Option<String>) -> (VMContext, QuestProtocol) {
         let mut ctx = VMContextBuilder::new()
             .predecessor_account_id(admin())
             .block_timestamp(START * MSECOND)
             .is_view(false)
             .build();
         testing_env!(ctx.clone());
-        let ctr = QuestProtocol::new(admin(), registry(), None, 10);
+        let signer;
+        if signer_pk.is_none() {
+            signer = base64::encode(generate_keypair().public.to_bytes().to_vec());
+        } else {
+            signer = signer_pk.unwrap();
+        }
+        let ctr = QuestProtocol::new(admin(), registry(), signer, 10);
         ctx.predecessor_account_id = predecessor.clone();
         testing_env!(ctx.clone());
         (ctx, ctr)
     }
 
+    fn sign_claim(c: &Claim, k: &Keypair) -> (String, String) {
+        let claim_bytes = c.try_to_vec().unwrap();
+        let sig: Signature = k.sign(&claim_bytes);
+        let sig_bytes = sig.to_bytes();
+        (
+            base64::encode(claim_bytes),
+            base64::encode(sig_bytes.to_vec()),
+        )
+    }
+
     #[test]
     fn assert_admin() {
-        let (_, ctr) = setup(&admin());
+        let (_, ctr) = setup(&admin(), None);
         ctr.assert_admin();
     }
 
     #[test]
     #[should_panic(expected = "not an admin")]
     fn assert_admin_not_admin() {
-        let (_, ctr) = setup(&alice());
+        let (_, ctr) = setup(&alice(), None);
         ctr.assert_admin();
     }
 
     #[test]
     fn flow1() {
-        let (mut ctx, mut ctr) = setup(&alice());
+        let (mut ctx, mut ctr) = setup(&alice(), None);
         ctx.attached_deposit = 10 * ONE_NEAR;
         testing_env!(ctx.clone());
         let quest_id = ctr.create_quest(
@@ -444,14 +459,60 @@ mod unit_tests {
     }
 
     #[test]
-    fn verify_quest() {
-        let (mut ctx, mut ctr) = setup(&alice());
+    fn verify_claim() {
+        let keypair = generate_keypair();
+        let public_key = keypair.public.to_bytes();
+        let (_, ctr) = setup(&alice(), Some(base64::encode(public_key.to_vec())));
         let claim = Claim {
-            account_id: "erika.near".to_string(),
-            quest_id: "477474".to_string(),
+            account_id: alice(),
+            quest_id: 1,
         };
-        let signature = "aThQoO3GYfuB2/pXDqx4ABP/kt6tj02ceM7rlCIQndo8H/c0ccXRNj5G4VuNuy9FgZrWilkxhNlu1LF7bJbaBw".to_string();
-        ctr.verify_claim(claim, signature);
+        let (claim_base64, sig_base64) = sign_claim(&claim, &keypair);
+        let decoded_claim = base64::decode(claim_base64).unwrap();
+        let decoded_sig = base64::decode(sig_base64).unwrap();
+        let res = ctr.verify_claim(&decoded_sig, &decoded_claim, &public_key);
+        assert!(res, "res {}", res);
+    }
+
+    #[test]
+    fn verify_claim_false_signer() {
+        let keypair = generate_keypair();
+        let public_key = keypair.public.to_bytes();
+        let (_, ctr) = setup(&alice(), Some(base64::encode(public_key.to_vec())));
+        let claim = Claim {
+            account_id: alice(),
+            quest_id: 1,
+        };
+        let (claim_base64, sig_base64) = sign_claim(&claim, &keypair);
+        let decoded_claim = base64::decode(claim_base64).unwrap();
+        let decoded_sig = base64::decode(sig_base64).unwrap();
+        let false_keypair = generate_keypair();
+        let res = ctr.verify_claim(
+            &decoded_sig,
+            &decoded_claim,
+            &false_keypair.public.to_bytes(),
+        );
+        assert!(!res, "res {}", res);
+    }
+
+    #[test]
+    fn verify_claim_false_claim() {
+        let keypair = generate_keypair();
+        let public_key = keypair.public.to_bytes();
+        let (_, ctr) = setup(&alice(), Some(base64::encode(public_key.to_vec())));
+        let claim = Claim {
+            account_id: alice(),
+            quest_id: 1,
+        };
+        let false_claim = Claim {
+            account_id: alice(),
+            quest_id: 2,
+        };
+        let (_, sig_base64) = sign_claim(&claim, &keypair);
+        let false_claim_bytes = false_claim.try_to_vec().unwrap();
+        let decoded_sig = base64::decode(sig_base64).unwrap();
+        let res = ctr.verify_claim(&decoded_sig, &false_claim_bytes, &public_key);
+        assert!(!res, "res {}", res);
     }
 
     // Only the owner of the quest can delete the quest

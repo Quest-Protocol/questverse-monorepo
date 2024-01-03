@@ -6,3 +6,6 @@ pub const QUESTS_PROTOCOL_PUBLIC_KEY_STR: &str =
 pub const MIN_DROP_ID_PASSED_IN: u128 = 1_000_000_000;
 
 pub const CLAIM_REWARD_GAS: Gas = Gas(10 * Gas::ONE_TERA.0);
+
+pub const PUB_KEY_LEN: usize = 32;
+pub const SIGNATURE_LEN: usize = 64;
