@@ -167,7 +167,7 @@ impl QuestProtocol {
         self.assert_not_claimed(claim.quest_id);
         self.assert_quest_in_progress(claim.quest_id);
 
-        self.verify_claim(&claim_bytes, &sig_bytes, &self.claim_signer_public_key);
+        self.verify_claim(&sig_bytes, &claim_bytes, &self.claim_signer_public_key);
 
         let mut quest = self.quest_by_id.get(&claim.quest_id).unwrap();
         if quest.humans_only {

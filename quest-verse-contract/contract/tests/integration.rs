@@ -2,20 +2,32 @@ use near_units::parse_near;
 use near_workspaces::{Account, AccountId, Contract, DevNetwork, Worker};
 use serde_json::json;
 
+use near_sdk::base64;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::AccountId as acc;
+use near_sdk::AccountId as NearAccountId;
+
+extern crate ed25519_dalek;
+extern crate rand;
+use ed25519_dalek::{Keypair, Signature, Signer};
 
 /// 1s in ms
 const MSECOND: u64 = 1_000_000;
 const SEC_TO_MS: u64 = 1_000;
 
+#[derive(BorshSerialize, BorshDeserialize, Deserialize, Serialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct Claim {
+    pub account_id: NearAccountId,
+    pub quest_id: u64,
+}
+
 #[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Debug)]
 #[serde(crate = "near_sdk::serde")]
 pub struct Quest {
     pub quest_id: u64,
-    pub creator: acc,
+    pub creator: NearAccountId,
     pub created_at: u64,
     pub starts_at: u64,
     pub expires_at: u64,
@@ -23,7 +35,7 @@ pub struct Quest {
     pub total_reward_amount: u128,
     pub total_participants_allowed: u64,
     pub num_claimed_rewards: u64,
-    pub participants: Vec<acc>,
+    pub participants: Vec<NearAccountId>,
     pub indexer_name: String,
 }
 
@@ -33,6 +45,25 @@ pub struct InitStruct {
     pub bob: Account,
     pub john: Account,
     pub admin: Account,
+    pub keypair: Keypair,
+}
+
+fn generate_keypair() -> Keypair {
+    Keypair::generate(&mut rand::thread_rng())
+}
+
+fn sign_claim(c: &Claim, k: &Keypair) -> (String, String) {
+    let claim_bytes = c.try_to_vec().unwrap();
+    let sig: Signature = k.sign(&claim_bytes);
+    let sig_bytes = sig.to_bytes();
+    (
+        base64::encode(claim_bytes),
+        base64::encode(sig_bytes.to_vec()),
+    )
+}
+
+fn to_near_account(acc: &AccountId) -> NearAccountId {
+    NearAccountId::new_unchecked(acc.to_string())
 }
 
 async fn init(worker: &Worker<impl DevNetwork>) -> anyhow::Result<InitStruct> {
@@ -40,6 +71,11 @@ async fn init(worker: &Worker<impl DevNetwork>) -> anyhow::Result<InitStruct> {
     let quest_protocol = worker
         .dev_deploy(include_bytes!("../../out/quest_protocol.wasm"))
         .await?;
+
+    let keypair = generate_keypair();
+    let signer = base64::encode(keypair.public.to_bytes().to_vec());
+
+    print!("public key base64: {}", signer);
 
     let admin = worker.dev_create_account().await?;
     let alice = worker.dev_create_account().await?;
@@ -50,7 +86,7 @@ async fn init(worker: &Worker<impl DevNetwork>) -> anyhow::Result<InitStruct> {
     // initialize contracts
     let res = quest_protocol
         .call("new")
-        .args_json(json!({"admin": admin.id(),"registry": registry.id(), "claim_signer_pk": null, "quest_fee": 10}))
+        .args_json(json!({"admin": admin.id(),"sbt_registry": registry.id(), "claim_signer_pk": signer, "quest_fee": 10}))
         .max_gas()
         .transact()
         .await?;
@@ -62,6 +98,7 @@ async fn init(worker: &Worker<impl DevNetwork>) -> anyhow::Result<InitStruct> {
         bob,
         john,
         admin,
+        keypair,
     })
 }
 #[tokio::test]
@@ -77,7 +114,7 @@ async fn flow1() -> anyhow::Result<()> {
 
     let res = setup.alice
         .call(setup.quest_protocol.id(), "create_quest")
-        .args_json(json!({"quest_id": 1,"starts_at": start_time_ms,"expires_at": end_time_ms, "total_participants_allowed": 3, "indexer_name": "indexer_test", "title": "", "description": "", "img_url": "", "tags": [] }))
+        .args_json(json!({"quest_id": 1,"starts_at": start_time_ms,"expires_at": end_time_ms, "total_participants_allowed": 3, "indexer_name": "indexer_test", "title": "", "description": "", "img_url": "", "tags": [], "humans_only": false}))
         .max_gas()
         .deposit(parse_near!(" 10 N"))
         .transact()
@@ -89,10 +126,17 @@ async fn flow1() -> anyhow::Result<()> {
 
     let initial_bob_balance = setup.bob.view_account().await?.balance;
 
+    let claim = Claim {
+        account_id: to_near_account(setup.bob.id()),
+        quest_id: 1,
+    };
+
+    let (claim_b64, sig_b64) = sign_claim(&claim, &setup.keypair);
+
     let res = setup
         .bob
         .call(setup.quest_protocol.id(), "claim_reward")
-        .args_json(json!({"quest_id": 1,"signed_claim_receipt": "test"}))
+        .args_json(json!({"claim_b64": claim_b64,"sig_b64": sig_b64}))
         .max_gas()
         .transact()
         .await?;
