@@ -1,5 +1,6 @@
 use crate::graphql_service::check_quest;
-use near_crypto::Signature;
+use base64::{engine::general_purpose, Engine as _};
+use ed25519_dalek::Signature;
 use reqwest::{header::InvalidHeaderValue, Error as ReqwestError};
 use serde::{Deserialize, Serialize};
 use std::convert::Infallible;
@@ -74,7 +75,7 @@ struct ValidationResponse {
 struct ClaimReceiptResponse {
     message: Option<String>,
     signed_receipt: String,
-    claim_data: QuestValidationInfo,
+    claim_data: String,
 }
 
 async fn validate_quest(info: QuestValidationInfo) -> Result<impl warp::Reply, Infallible> {
@@ -107,13 +108,19 @@ async fn generate_claim_receipt(
         }
     }
 
+    let sig_bytes = signed_receipt.into_bytes();
+    let sig_bytes_encoded = general_purpose::STANDARD_NO_PAD.encode(&sig_bytes.to_vec());
+    let claim_data_bytes = serde_json::to_vec(&QuestValidationInfo {
+        account_id: info.account_id,
+        quest_id: info.quest_id,
+    })
+    .unwrap();
+
+    let claim_data_encoded = general_purpose::STANDARD_NO_PAD.encode(claim_data_bytes);
     Ok(warp::reply::json(&ClaimReceiptResponse {
         message,
-        signed_receipt,
-        claim_data: QuestValidationInfo {
-            account_id: info.account_id,
-            quest_id: info.quest_id,
-        },
+        signed_receipt: sig_bytes_encoded,
+        claim_data: claim_data_encoded,
     }))
 }
 

@@ -1,4 +1,4 @@
-use crate::internal::sign_claim;
+use crate::internal::{sign_claim, Claim};
 use crate::{
     QuestConditionQuery, QuestState, QuestStateError, QuestValidationInfo, QuestValidationRequest,
 };
@@ -67,20 +67,26 @@ pub(crate) async fn check_quest(
         Ok(data) if !data.is_empty() => data.get(0).unwrap().clone(),
         _ => return Err(QuestStateError::QueryNotFound),
     };
+    let parsed_quest_id = match quest_id.clone().parse::<u64>() {
+        Ok(id) => id,
+        Err(_) => {
+            return Err(QuestStateError::ClaimError(
+                "quest_id could not be parsed".to_string(),
+            ))
+        }
+    };
 
     match &quest_snapshot.is_completed {
         true => {
-            let payload = serde_json::to_string(&QuestValidationInfo {
+            let claim = Claim {
                 account_id: account_id.clone(),
-                quest_id: quest_id.clone(),
-            })
-            .unwrap()
-            .into_bytes();
+                quest_id: parsed_quest_id,
+            };
 
-            let claim_response = sign_claim(&payload);
+            let claim_response = sign_claim(&claim, None);
 
             match claim_response {
-                Ok(signature) => Ok(QuestState::Completed(
+                Ok((_, signature)) => Ok(QuestState::Completed(
                     "Quest has been completed!".to_string(),
                     signature,
                 )),

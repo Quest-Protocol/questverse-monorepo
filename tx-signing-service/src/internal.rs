@@ -1,138 +1,129 @@
-use near_crypto::{InMemorySigner, SecretKey, Signature, Signer};
-use near_primitives::types::AccountId;
+use ed25519_dalek::Signature;
+use ed25519_dalek::{Keypair, Signer};
 use std::env;
 use std::error::Error;
-use std::str::FromStr;
 
-/// given a payload, `sign_claim` pulls the Secret Key and Account ID from environment and uses
-/// an in-memory signer
-pub(crate) fn sign_claim(payload: &[u8]) -> Result<Signature, Box<dyn Error>> {
-    let secret_key = env::var("SECRET_KEY")?;
-    let secret_key = SecretKey::from_str(&secret_key)?;
+use base64::{engine::general_purpose, Engine as _};
+use borsh::{BorshDeserialize, BorshSerialize};
 
-    let account_id = env::var("ACCOUNT_ID").unwrap_or("v1.questverse.near".to_string());
-    let account_id = AccountId::from_str(&account_id)?;
+#[derive(BorshSerialize, BorshDeserialize)]
+pub struct Claim {
+    pub account_id: String,
+    pub quest_id: u64,
+}
 
-    let signer = InMemorySigner::from_secret_key(account_id, secret_key);
+pub(crate) fn sign_claim(
+    claim: &Claim,
+    keypair: Option<Keypair>,
+) -> Result<(String, Signature), Box<dyn Error>> {
+    let keypair = match keypair {
+        Some(kp) => kp,
+        None => {
+            let secret_key =
+                env::var("SECRET_KEY").expect("SECRET_KEY not found in the environment");
+            println!("secret_keysigned: {:?}", &secret_key);
+            let secret_key_decoded = general_purpose::STANDARD_NO_PAD
+                .decode(secret_key)
+                .expect("Failed to decode secret key");
 
-    Ok(signer.sign(payload))
+            Keypair::from_bytes(&secret_key_decoded).expect("Failed to create keypair from bytes")
+        }
+    };
+
+    let claim_bytes = claim.try_to_vec().unwrap();
+    let sig: Signature = keypair.sign(&claim_bytes);
+    let claim_base64 = general_purpose::STANDARD_NO_PAD.encode(claim_bytes.clone());
+    Ok((claim_base64, sig))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::QuestValidationInfo;
-    use near_crypto::{KeyType, SecretKey};
-    use serde_json;
+    use base64::engine::general_purpose;
+    use ed25519_dalek::Keypair;
+    use ed25519_dalek::Verifier;
     use std::path::Path;
 
-    fn setup() {
+    fn sign_claim_test(claim: &Claim, keypair: Keypair) -> (String, Signature) {
+        sign_claim(&claim, Some(keypair)).unwrap()
+    }
+
+    fn generate_keypair() -> Keypair {
+        Keypair::generate(&mut rand::thread_rng())
+    }
+
+    /// copy of verify_claim method from the contract
+    pub fn verify_claim(claim_sig: &[u8; 64], claim: &[u8], public_key: &[u8; 32]) -> bool {
+        let public_key = ed25519_dalek::PublicKey::from_bytes(public_key).unwrap();
+        let sig: &[u8; 64] = claim_sig
+            .as_slice()
+            .try_into()
+            .expect("signature must be 64 bytes");
+        match Signature::from_bytes(sig) {
+            Ok(sig) => public_key.verify(claim, &sig).is_ok(),
+            Err(_) => false,
+        }
+    }
+
+    #[test]
+    fn test_env() {
         let dotenv_path = Path::new(".env.test");
         dotenv::from_path(dotenv_path).ok();
     }
 
-    fn mock_payload() -> Vec<u8> {
-        serde_json::to_string(&QuestValidationInfo {
-            account_id: "erika.near".to_string(),
-            quest_id: 477474.to_string(),
-        })
-        .unwrap()
-        .into_bytes()
-    }
+    #[test]
+    fn verify_claim_works() {
+        let keypair = generate_keypair();
+        let public_key = keypair.public.to_bytes();
+        let claim = Claim {
+            account_id: "alice.near".to_string(),
+            quest_id: 1,
+        };
+        let (claim_base64, sig) = sign_claim_test(&claim, keypair);
 
-    const DEFAULT_ACCOUNT_ID: &str = "v1.questverse.near";
+        let decoded_claim = general_purpose::STANDARD_NO_PAD
+            .decode(claim_base64)
+            .unwrap();
 
-    /// `generate_valid_secret_key` generates a random secret key
-    fn generate_valid_secret_key() -> String {
-        let secret_key = SecretKey::from_random(KeyType::ED25519);
-        secret_key.to_string()
+        let res = verify_claim(&sig.to_bytes(), &decoded_claim, &public_key);
+        assert!(res, "res {}", res);
     }
 
     #[test]
-    fn test_sign_claim_with_valid_keys_and_correct_signer() {
-        setup();
-
-        let valid_secret_key = env::var("SECRET_KEY").expect("SECRET_KEY not found");
-        let valid_account_id = env::var("ACCOUNT_ID").expect("ACCOUNT_ID not found");
-
-        let payload = mock_payload();
-        let signature = sign_claim(&payload);
-        assert!(
-            signature.is_ok(),
-            "sign_claim should succeed with valid input"
+    fn verify_claim_false_signer() {
+        let keypair = generate_keypair();
+        let claim = Claim {
+            account_id: "alice.near".to_string(),
+            quest_id: 1,
+        };
+        let (claim_base64, sig) = sign_claim_test(&claim, keypair);
+        let decoded_claim = general_purpose::STANDARD_NO_PAD
+            .decode(claim_base64)
+            .unwrap();
+        let false_keypair = generate_keypair();
+        let res = verify_claim(
+            &sig.to_bytes(),
+            &decoded_claim,
+            &false_keypair.public.to_bytes(),
         );
-
-        let signature = signature.unwrap();
-
-        let secret_key =
-            SecretKey::from_str(&valid_secret_key).expect("Failed to parse secret key");
-        let account_id =
-            AccountId::from_str(&valid_account_id).expect("Failed to parse account ID");
-        let signer = InMemorySigner::from_secret_key(account_id, secret_key);
-
-        let is_valid = signer.verify(&payload, &signature);
-
-        assert!(is_valid, "The signature should be valid");
+        assert!(!res, "res {}", res);
     }
 
     #[test]
-    fn test_sign_claim_with_valid_keys_and_incorrect_signer() {
-        setup();
-
-        let valid_account_id = env::var("ACCOUNT_ID").expect("ACCOUNT_ID not found");
-
-        let payload = mock_payload();
-        let signature = sign_claim(&payload);
-        assert!(
-            signature.is_ok(),
-            "sign_claim should succeed with valid input"
-        );
-
-        let payload = mock_payload();
-        let signature = sign_claim(&payload);
-        assert!(
-            signature.is_ok(),
-            "sign_claim should succeed with valid input"
-        );
-        let signature = signature.unwrap();
-
-        let sk2 = generate_valid_secret_key();
-        let secret_key = SecretKey::from_str(&sk2).expect("Failed to parse secret key");
-        let account_id =
-            AccountId::from_str(&valid_account_id).expect("Failed to parse account ID");
-        let signer = InMemorySigner::from_secret_key(account_id, secret_key);
-
-        let is_valid = signer.verify(&payload, &signature);
-
-        assert!(
-            !is_valid,
-            "The signature should not be valid with a different secret key"
-        );
-    }
-
-    #[test]
-    fn test_sign_claim_with_default_account_id() {
-        setup();
-
-        let valid_secret_key = env::var("SECRET_KEY").expect("SECRET_KEY not found");
-
-        let payload = mock_payload();
-        let signature = sign_claim(&payload);
-        assert!(
-            signature.is_ok(),
-            "sign_claim should succeed with default account ID"
-        );
-
-        let signature = signature.unwrap();
-
-        let secret_key =
-            SecretKey::from_str(&valid_secret_key).expect("Failed to parse secret key");
-        let account_id =
-            AccountId::from_str(DEFAULT_ACCOUNT_ID).expect("Failed to parse account id");
-        let signer = InMemorySigner::from_secret_key(account_id, secret_key);
-
-        let is_valid = signer.verify(&payload, &signature);
-
-        assert!(is_valid, "The signature should be valid");
+    fn verify_claim_false_claim() {
+        let keypair = generate_keypair();
+        let public_key = keypair.public.to_bytes();
+        let claim = Claim {
+            account_id: "alice.near".to_string(),
+            quest_id: 1,
+        };
+        let false_claim = Claim {
+            account_id: "alice.near".to_string(),
+            quest_id: 2,
+        };
+        let (_, sig) = sign_claim_test(&claim, keypair);
+        let false_claim_bytes = false_claim.try_to_vec().unwrap();
+        let res = verify_claim(&sig.to_bytes(), &false_claim_bytes, &public_key);
+        assert!(!res, "res {}", res);
     }
 }
