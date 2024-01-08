@@ -4,7 +4,7 @@ const pageUrl = props.url ?? "/bos.questverse.near/widget/pages.Discover";
 
 const quest =
   props.quest ??
-  Near.view("test1.questverse.near", "quest_by_id", { quest_id: questId });
+  Near.view("v0.questverse.near", "quest_by_id", { quest_id: questId });
 
 if (!quest) {
   return "quest data missing";

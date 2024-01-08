@@ -1,4 +1,5 @@
-const quests = Near.view("test1.questverse.near", "quests");
+const quests = Near.view("v0.questverse.near", "quests");
+console.log("quests", quests);
 
 if (!quests) {
   return "";
@@ -41,7 +42,7 @@ function extractThings(data) {
                   things.push(
                     <div key={key}>
                       <Widget
-                        src="hack.near/widget/quest.card"
+                        src="bos.questverse.near/widget/quest.card"
                         props={{ questId }}
                       />
                     </div>
