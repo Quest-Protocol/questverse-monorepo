@@ -8,14 +8,15 @@ function formatDate(date) {
 }
 
 const TODAY = formatDate(new Date());
+const ONE_HOUR = 60 * 60 * 1000;
 const DAY_IN_SECONDS = 24 * 60 * 60 * 1000;
 const ONE_WEEK = DAY_IN_SECONDS * 7;
 
 State.init({
   date_start: formatDate(new Date(Date.now() + DAY_IN_SECONDS)),
   date_end: formatDate(new Date(Date.now() + ONE_WEEK)),
-  starts_at: null,
-  expires_at: null,
+  starts_at: new Date(Date.now() + ONE_HOUR).getTime(),
+  expires_at: new Date(Date.now() + ONE_WEEK).getTime(),
 });
 
 const setStartDate = (e) => {
