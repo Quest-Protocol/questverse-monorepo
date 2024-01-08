@@ -6,7 +6,7 @@ const REWARDS_JSON = fetch_step_three_data();
 State.init({
   rewardToken: "NEAR",
   tokensAllocated: formState.tokensAllocated,
-  total_participants_allowed: formState.total_participants_allowed,
+  numberOfParticipants: formState.numberOfParticipants,
 });
 
 function handleRewardTokenChange(e) {
@@ -78,7 +78,7 @@ return (
       <input
         type="number"
         id="participantsAllowed"
-        value={state.total_participants_allowed}
+        value={state.numberOfParticipants}
         onChange={handleTotalParticipantsAllowed}
       />
     </div>
@@ -86,7 +86,7 @@ return (
     <div>
       <label htmlFor="rewardAmount">
         Reward Amount Per Participant:
-        {state.tokensAllocated / state.total_participants_allowed} {state.rewardToken}
+        {state.tokensAllocated / state.numberOfParticipants} {state.rewardToken}
       </label>
     </div>
     {renderFooter(state)}
