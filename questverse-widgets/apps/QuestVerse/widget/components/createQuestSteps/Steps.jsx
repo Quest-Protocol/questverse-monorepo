@@ -45,7 +45,7 @@ function handleFormComplete(value) {
       description: value.form.description,
       img_url: value.form.img_url,
       tags: value.tags,
-      humans_only: value.humans_only,
+      humans_only: value.humans_only || false,
     },
   };
 
