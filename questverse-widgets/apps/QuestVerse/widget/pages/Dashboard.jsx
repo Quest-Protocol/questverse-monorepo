@@ -1,14 +1,14 @@
 // Feed
-const type = props.type || "quest";
-
-const things = Social.keys(`*/${type}/*`, "final", {
-  return_type: "BlockHeight",
-});
-
-if (!things) {
-  return "Loading...";
-}
-
+// const type = props.type || "quest";
+//
+// const things = Social.keys(`*/${type}/*`, "final", {
+//   return_type: "BlockHeight",
+// });
+//
+// if (!things) {
+//   return "Loading...";
+// }
+//
 const Container = styled.div`
   margin: 0 auto;
   padding: 20px;
@@ -68,7 +68,8 @@ const processData = useCallback(
 
 // const items = processData(things);
 
-const items = Near.view("questsmock.near", "get_all_quests");
+const items = Near.view("v0.questverse.near", "quests");
+console.log(items, "quests")
 
 if (!items) {
   return "Loading data...";
@@ -78,11 +79,11 @@ if (items.length === 0) {
   return `No items of type: "${type}" found.`;
 }
 
-function Item({ accountId, name, type, metadata }) {
+function Item(item) {
   return (
     <Widget
       src="/*__@appAccount__*//widget/components.quest.card"
-      props={{ questId: quest[0] }}
+      props={{ questId: item.quest_id }}
     />
   );
   // // Use metadata.name if it exists, otherwise use the passed name
