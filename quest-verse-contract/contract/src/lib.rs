@@ -119,6 +119,10 @@ impl QuestProtocol {
             participants: Vec::new(),
             indexer_name,
             humans_only,
+            title,
+            description,
+            img_url,
+            tags,
         };
 
         self.quest_by_id.insert(&quest_id, &quest);
