@@ -1,11 +1,11 @@
 const accountId = props.accountId ?? context.accountId;
 const questId = props.questId ?? 3;
 const pageUrl = props.url ?? "/bos.questverse.near/widget/pages.Discover";
+const claimedByUser = props.isClaimedByUser ?? false;
 
-const quest =
-  props.quest ??
-  Near.view("v0.questverse.near", "quest_by_id", { quest_id: questId });
-
+const quest = Near.view("v0.questverse.near", "quest_by_id", {
+  quest_id: questId,
+});
 if (!quest) {
   return "quest data missing";
 }
@@ -79,18 +79,20 @@ const Tag = styled.a`
 `;
 
 const amount = (quest.total_reward_amount / 1000000000000000000000000).toFixed(
-  1
+  4
 );
 
 const indexer = quest.indexer_name;
-
 const openClaims = quest.total_participants_allowed - quest.num_claimed_rewards;
+// const didStartQuest = Social.get("questId")
+const questStatus = claimedByUser ? "Claimed" : "";
 
 return (
   <>
     <Card>
       <CardLeft>
         <div className="d-flex flex-column me-3">
+          <div className="text-truncate pb-3">Quest Status: {questStatus}</div>
           <div className="d-flex flex-row me-3">
             <div className="me-3">
               <a href={questUrl}>
@@ -135,15 +137,17 @@ return (
                 </>
               )}
             </div>
-          </div>
-          <div className="d-flex flex-row me-3">
-            <Widget
-              src="hack.near/widget/tags"
-              props={{
-                path: `${quest.creator}/quest/${quest.quest_id}`,
-                url: "/bos.questverse.near/widget/pages.Discover",
-              }}
-            />
+            {context.accountId == quest.creator && (
+              <div className="d-flex flex-row me-3">
+                <Widget
+                  src="hack.near/widget/tags"
+                  props={{
+                    path: `${quest.creator}/quest/${quest.quest_id}`,
+                    url: "/bos.questverse.near/widget/pages.Discover",
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       </CardLeft>
@@ -153,7 +157,7 @@ return (
             src="mob.near/widget/N.Overlay.Faces"
             props={{ accounts: quest.participants, limit: 10 }}
           />
-          {quest.participants.length !== 0 && "done"}
+          {quest.participants.length !== 0 && "claimed"}
         </p>
       </div>
       <div className="d-flex flex-column">
@@ -171,8 +175,10 @@ return (
       {!isVerified && context.accountId && (
         <div className="d-flex flex-column m12">
           <b>{amount} NEAR</b>
-
-          <Widget src="bos.questverse.near/widget/components.quest.claim" props={{ questId }} />
+          <Widget
+            src="bos.questverse.near/widget/components.quest.claim"
+            props={{ questId, claimedByUser }}
+          />
           <p className="text-center mt-1">
             <i>{openClaims} left</i>
           </p>

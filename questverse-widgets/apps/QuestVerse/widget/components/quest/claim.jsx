@@ -1,5 +1,5 @@
 const isAvailable = true;
-const isClaimed = false;
+const isClaimed = props.isClaimedByUser ?? false;
 
 const accountId = props.accountId ?? context.accountId;
 const questId = props.questId;
@@ -25,6 +25,7 @@ const data = {
 const type = isClaimed ? "disclaim" : "claim";
 
 const claimQuest = () => {
+  if (claimedByUser) return
   const claimArgs = {
     claim: {
       account_id: accountId,
@@ -55,7 +56,7 @@ return (
       }`}
       onClick={claimQuest}
     >
-      {isClaimed ? "claimed" : "claim"}
+      {isClaimed ? "Quest Already Claimed" : "claim"}
     </button>
   </div>
 );

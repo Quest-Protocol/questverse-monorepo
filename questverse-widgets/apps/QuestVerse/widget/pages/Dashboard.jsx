@@ -9,6 +9,13 @@
 //   return "Loading...";
 // }
 //
+const accountId = props.accountId || context.accountId;
+const quests = Near.view("v0.questverse.near", "quests");
+const user_claimed_quests =
+  Near.view("v0.questverse.near", "claimed_quests_by_user", {
+    user: accountId,
+  }) ?? [];
+
 const Container = styled.div`
   margin: 0 auto;
   padding: 20px;
@@ -38,38 +45,18 @@ const Grid = styled.div`
   }
 `;
 
-const processData = useCallback(
-  (data) => {
-    const accounts = Object.entries(data);
+const processData = (data) => {
+  const allItems = data.map((quest) => ({
+    ...quest,
+    isClaimedByUser: user_claimed_quests.includes(quest.quest_id),
+  }));
 
-    const allItems = accounts
-      .map((account) => {
-        const accountId = account[0];
-        return Object.entries(account[1][type]).map((kv) => {
-          return {
-            accountId,
-            type: type,
-            name: kv[0],
-            metadatadata: Social.get(
-              `${accountId}/${type}/${kv[0]}/metadata/**`,
-              "final"
-            ),
-          };
-        });
-      })
-      .flat();
+  // sort by latest
+  allItems.sort((a, b) => b.created_at - a.created_at);
+  return allItems;
+};
 
-    // sort by latest
-    allItems.sort((a, b) => b.blockHeight - a.blockHeight);
-    return allItems;
-  },
-  [type]
-);
-
-// const items = processData(things);
-
-const items = Near.view("v0.questverse.near", "quests");
-console.log(items, "quests")
+const items = processData(quests);
 
 if (!items) {
   return "Loading data...";
@@ -83,7 +70,7 @@ function Item(item) {
   return (
     <Widget
       src="/*__@appAccount__*//widget/components.quest.card"
-      props={{ questId: item.quest_id }}
+    props={{ questId: item.quest_id, isClaimedByUser: item.isClaimedByUser }}
     />
   );
   // // Use metadata.name if it exists, otherwise use the passed name
