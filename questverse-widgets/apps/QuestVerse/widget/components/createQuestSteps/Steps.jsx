@@ -28,7 +28,6 @@ function handleFormComplete(value) {
     value.indexerConfig.selectedAction
     ];
   const new_code = replaceTemplateLiterals(indexer_config.code, value.formData);
-  console.log(indexer_config);
 
   const indexer_name = transformVariables(
     quest_id,
@@ -175,8 +174,6 @@ const handlePrevious = () => {
 };
 
 const handleStepComplete = (value) => {
-  console.log(value, "value");
-  console.log(state.form, "allvals");
   // const stepValid = true;
   // Object.keys(value).forEach((key) => {
   //   const properties = types["hack.near/type/quest"].properties.find(

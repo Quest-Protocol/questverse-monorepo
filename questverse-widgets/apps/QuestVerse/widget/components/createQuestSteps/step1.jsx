@@ -83,10 +83,6 @@ const renderActionsDropdown = () => {
 };
 
 const renderSubFields = (fields) => {
-  {
-    console.log(fields, "field");
-  }
-
   return (
     <div>
       <h3 className="h5 fw-bold p-2">Customize Quest</h3>
