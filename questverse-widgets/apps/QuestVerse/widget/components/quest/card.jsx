@@ -137,15 +137,17 @@ return (
                 </>
               )}
             </div>
-          </div>
-          <div className="d-flex flex-row me-3">
-            <Widget
-              src="hack.near/widget/tags"
-              props={{
-                path: `${quest.creator}/quest/${quest.quest_id}`,
-                url: "/bos.questverse.near/widget/pages.Discover",
-              }}
-            />
+            {context.accountId == quest.creator && (
+              <div className="d-flex flex-row me-3">
+                <Widget
+                  src="hack.near/widget/tags"
+                  props={{
+                    path: `${quest.creator}/quest/${quest.quest_id}`,
+                    url: "/bos.questverse.near/widget/pages.Discover",
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       </CardLeft>
@@ -155,7 +157,7 @@ return (
             src="mob.near/widget/N.Overlay.Faces"
             props={{ accounts: quest.participants, limit: 10 }}
           />
-          {quest.participants.length !== 0 && "done"}
+          {quest.participants.length !== 0 && "claimed"}
         </p>
       </div>
       <div className="d-flex flex-column">
