@@ -69,7 +69,7 @@ const Image = styled.div`
 `;
 
 const ImageProfile = styled.div`
-  
+
   img {
     position: absolute;
     width: 66px;
@@ -125,7 +125,7 @@ font-family: Helvetica Neue;
 font-size: 16px;
 font-style: normal;
 font-weight: 400;
-line-height: 148%; 
+line-height: 148%;
   }
 `;
 
@@ -251,8 +251,7 @@ const formattedEndHour = formatTime(endTime);
 // console.log(`End date: ${formattedEndDate}`);
 // console.log(`End time: ${formattedEndHour}`);
 
-const claimsData = Near.view("questsmock.near", "get_all_quests");
-console.log(claimsData);
+const claimsData = Near.view("v1.questverse.near", "quests");
 
 const tags =
   questData && questData.tags.map((tag) => <span className="tag">#{tag}</span>);
@@ -273,7 +272,7 @@ const TaskContainer = styled.div`
       #000
     `
         : `#B0B0B0`};
-    
+
     .completed{
       border-radius: 50px;
       background: #B0B0B0;
