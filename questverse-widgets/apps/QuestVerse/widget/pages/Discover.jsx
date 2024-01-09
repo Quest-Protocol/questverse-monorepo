@@ -42,7 +42,7 @@ function extractThings(data) {
                   things.push(
                     <div key={key}>
                       <Widget
-                        src="bos.questverse.near/widget/quest.card"
+                        src="bos.questverse.near/widget/components.quest.card"
                         props={{ questId }}
                       />
                     </div>
@@ -118,7 +118,7 @@ return (
             {quests.map((quest) => (
               <div className="m-2">
                 <Widget
-                  src="hack.near/widget/quest.card"
+                  src="bos.questverse.near/widget/components.quest.card"
                   props={{
                     questId: quest.quest_id,
                     url: "bos.questverse.near/widget/pages.Discover",

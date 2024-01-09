@@ -172,7 +172,7 @@ return (
         <div className="d-flex flex-column m12">
           <b>{amount} NEAR</b>
 
-          <Widget src="hack.near/widget/quest.claim" props={{ questId }} />
+          <Widget src="bos.questverse.near/widget/components.quest.claim" props={{ questId }} />
           <p className="text-center mt-1">
             <i>{openClaims} left</i>
           </p>
