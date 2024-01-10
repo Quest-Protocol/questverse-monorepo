@@ -39,13 +39,13 @@ function handleFormComplete(value) {
       quest_id: quest_id,
       starts_at: value.starts_at,
       expires_at: value.expires_at,
-      total_participants_allowed: value.total_participants_allowed,
-      indexer_name: value.indexerConfig.indexerId,
+      total_participants_allowed: value.numberOfParticipants,
+      indexer_name: indexer_name,
       title: value.form.title,
       description: value.form.description,
       img_url: value.form.img_url,
       tags: value.tags,
-      humans_only: value.humans_only,
+      humans_only: value.humans_only || false,
     },
   };
 
@@ -129,10 +129,9 @@ let initialFormState = {
   excludedList: [],
 
   //STEP 3
-  rewardNetwork: "",
-  rewardToken: "",
-  tokensAllocated: 0,
-  rewardAmount: "",
+  rewardToken: "NEAR",
+  tokensAllocated: .1,
+  numberOfParticipants: 1,
 
   //STEP 4
   date_start: "",
