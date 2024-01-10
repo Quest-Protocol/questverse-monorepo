@@ -7,6 +7,8 @@ use std::convert::Infallible;
 use std::fmt::Debug;
 use thiserror::Error;
 use warp::Filter;
+use tracing::{error, Level};
+use tracing_subscriber::fmt;
 
 mod graphql_service;
 mod internal;
@@ -146,6 +148,13 @@ async fn handle_errors(err: warp::Rejection) -> Result<impl warp::Reply, warp::R
 
 #[tokio::main]
 async fn main() {
+    fmt::Subscriber::builder()
+        .with_max_level(Level::INFO)
+        .with_writer(std::io::stdout)
+        .fmt_fields(fmt::format::PrettyFields::new())
+        .init();
+
+
     let validate = warp::path!("v1" / "validate" / String / String)
         .map(|account_id, quest_id| QuestValidationInfo {
             account_id,
