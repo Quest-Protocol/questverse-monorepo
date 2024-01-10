@@ -1,24 +1,19 @@
 use constants::{CLAIM_REWARD_GAS, SIGNATURE_LEN};
 // Find all our documentation at https://docs.near.org
-use keypom_models::*;
-
 use ed25519_dalek::{Signature, Verifier, PUBLIC_KEY_LENGTH};
 use near_sdk::base64;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::{LazyOption, LookupMap, UnorderedMap, UnorderedSet};
-use near_sdk::json_types::U128;
-use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{env, near_bindgen, require, AccountId, Gas, PanicOnDefault, Promise, PublicKey};
+use near_sdk::collections::{LookupMap, UnorderedMap, UnorderedSet};
+use near_sdk::{env, near_bindgen, require, AccountId, PanicOnDefault, Promise};
 use quest::Quest;
 
+pub mod external;
+pub use crate::external::*;
 use storage::StorageKeys;
 use types::{Claim, QuestId};
-pub mod external;
 mod storage;
-pub use crate::external::*;
 use crate::utils::pubkey_from_b64;
 mod constants;
-mod keypom_models;
 mod quest;
 mod types;
 mod utils;
