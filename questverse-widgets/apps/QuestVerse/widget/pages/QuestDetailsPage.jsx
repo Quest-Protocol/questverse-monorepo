@@ -1,4 +1,8 @@
-const questContract = "questsmock.near";
+const questContract = "v0.questverse.near";
+const questId = JSON.parse(props.questId);
+if (!questId) {
+  return "No account or quest id provided";
+}
 const verifiedCheck = (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -18,58 +22,54 @@ const verifiedCheck = (
 );
 
 const CardRoot = styled.div`
-    width: 100%;
-    max-width: 1440px;
-    border: 1px solid #EFEFEF;
-    background: #FFF;
-    box-shadow: 2px 2px 12px 0px rgba(0, 0, 0, 0.05);
-    display: flex;
-    *{
-      font-family: Helvetica Neue;
-      line-height: 110%;
-    }
-    flex-flow: column nowrap;
-    gap: 1rem;
-    margin: 0 auto 20px auto;
-    h1 {
-        overflow: hidden;
-        color: #000;
-        text-overflow: ellipsis;
-        whitespace: nowrap;
-        font-family: Helvetica Neue;
-        font-size: 24px;
-        font-style: normal;
-        font-weight: 700;
-        line-height: normal;
-        text-transform: uppercase;
-    }
-h6, h5{
+  width: 100%;
+  max-width: 1440px;
+  border: 1px solid #efefef;
+  box-shadow: 2px 2px 12px 0px rgba(0, 0, 0, 0.05);
+  display: flex;
+  * {
+    font-family: Helvetica Neue;
+    line-height: 110%;
+  }
+  flex-flow: column nowrap;
+  gap: 1rem;
+  margin: 0 auto 20px auto;
+  h1 {
+    overflow: hidden;
+    color: #000;
+    text-overflow: ellipsis;
+    whitespace: nowrap;
+    font-family: Helvetica Neue;
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+    text-transform: uppercase;
+  }
+  h6,
+  h5 {
     font-weight: 900;
-    color: #B0B0B0;;
-}
+  }
 `;
 const Image = styled.div`
-    height: 100px;
-    widt:100px;
-    margin-right: 10px;
-    background-image: url(${
-      questData.img_url ??
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRub7hFLkStCvZiaSeiUGznP4uzqPPcepghhg&usqp=CAU"
-    });
-    background-size: cover;
+  height: 100px;
+  widt: 100px;
+  margin-right: 10px;
+  background-image: url(${questData.img_url ??
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRub7hFLkStCvZiaSeiUGznP4uzqPPcepghhg&usqp=CAU"});
+  background-size: cover;
 
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    position: relative;
+  img {
     width: 100%;
-    // background: black;
+    height: 100%;
+    object-fit: cover;
+  }
+  position: relative;
+  width: 100%;
+  // background: black;
 `;
 
 const ImageProfile = styled.div`
-
   img {
     position: absolute;
     width: 66px;
@@ -86,12 +86,12 @@ const ImageProfile = styled.div`
 `;
 
 const HeaderText = styled.div`
-    margin-bottom: 2rem;
-    flex:0.8;
+  margin-bottom: 2rem;
+  flex: 0.8;
   p {
     margin-bottom: 10px;
     overflow: hidden;
-    color: #B0B0B0;
+    color: #b0b0b0;
     text-overflow: ellipsis;
     font-family: Helvetica Neue;
     font-size: 16px;
@@ -102,30 +102,30 @@ const HeaderText = styled.div`
 `;
 
 const CardBody = styled.div`
-margin-top: 20px;
-padding: 0 16px;
-display:inherit;
-flex-flow: inherit;
-gap: inherit;
+  margin-top: 20px;
+  padding: 0 16px;
+  display: inherit;
+  flex-flow: inherit;
+  gap: inherit;
   h1 {
     color: #000;
-font-family: Helvetica Neue;
-font-size: 24px;
-font-style: normal;
-font-weight: 700;
-line-height: normal;
-text-transform: uppercase;
+    font-family: Helvetica Neue;
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+    text-transform: uppercase;
   }
   p {
     overflow: hidden;
-color: #000;
-text-overflow: ellipsis;
-whitespace: nowrap;
-font-family: Helvetica Neue;
-font-size: 16px;
-font-style: normal;
-font-weight: 400;
-line-height: 148%;
+    color: #000;
+    text-overflow: ellipsis;
+    whitespace: nowrap;
+    font-family: Helvetica Neue;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 148%;
   }
 `;
 
@@ -134,21 +134,21 @@ const TagsSec = styled.div`
   display: flex;
   flex-direction: column;
   gap: 20px;
-  .tags{
+  .tags {
     display: flex;
     gap: 0.5rem;
-      color: #B0B0B0;
-      font-size: 12px;
-      font-weight: 400;
-      .tag{
-        display: flex;
-        padding: 2px 16px;
-        justify-content: center;
-        align-items: center;
-        gap: 8px;
-        border-radius: 50px;
-        background: #F8F8F8;
-      }
+    color: #b0b0b0;
+    font-size: 12px;
+    font-weight: 400;
+    .tag {
+      display: flex;
+      padding: 2px 16px;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      border-radius: 50px;
+      background: #f8f8f8;
+    }
   }
 `;
 
@@ -184,10 +184,10 @@ margin-top: 10px;
 const Username = styled.div`
   display: flex;
   align-items: center;
-  p{
+  p {
     margin-bottom: 10px;
     overflow: hidden;
-    color: #B0B0B0;
+    color: #b0b0b0;
     text-overflow: ellipsis;
     font-weight: 400;
     line-height: normal;
@@ -200,27 +200,38 @@ const Username = styled.div`
 `;
 
 const Card = styled.div`
-    background: #FFF;
-    box-shadow: 2px 2px 12px 0px rgba(0, 0, 0, 0.07);
-    border-radius: .5rem;
-    padding: 1rem;
-    .quest-reward{
-      font-size: 20px;
-      display: flex;
-      align-items: center;
-      gap: .3rem;
-    }
-    .near-icon{
-      width:16px;
-    }
+  box-shadow: 2px 2px 12px 0px rgba(0, 0, 0, 0.07);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  .quest-reward {
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .near-icon {
+    width: 16px;
+  }
 `;
 
-const questData = Near.view(questContract, "get_quest_by_id", {
-  questId: props.questId ?? 926381045,
+const questData = Near.view(questContract, "quest_by_id", {
+  quest_id: questId,
 });
 
-const startTime = questData.start_time;
-const endTime = questData.end_time;
+if (!questData) {
+  return "loading quest details...";
+}
+
+const createdAt = questData.created_at;
+const startTime = questData.starts_at;
+const endTime = questData.ends_at;
+const expiresAt = questData.expires_at;
+const rewardAmount = (
+  questData.total_reward_amount / 1000000000000000000000000
+).toFixed(4);
+const claimsLeft =
+  questData.total_participants_allowed - questData.num_claimed_rewards;
+const indexer = questData.indexer_name;
 
 function formatDate(timestamp) {
   const date = new Date(timestamp);
@@ -241,44 +252,41 @@ function formatTime(timestamp) {
 }
 
 const formattedStartDate = formatDate(startTime);
-const formattedStartHour = formatTime(startTime);
-
 const formattedEndDate = formatDate(endTime);
-const formattedEndHour = formatTime(endTime);
+const formattedExpiresDate = formatDate(expiresAt);
+const claimsData = quest.participants || [];
 
-// console.log(`Start date: ${formattedStartDate}`);
-// console.log(`Start time: ${formattedStartHour}`);
-// console.log(`End date: ${formattedEndDate}`);
-// console.log(`End time: ${formattedEndHour}`);
-
-const claimsData = Near.view("v1.questverse.near", "quests");
-
-const tags =
-  questData && questData.tags.map((tag) => <span className="tag">#{tag}</span>);
+// const tags =
+//   questData && questData.tags.map((tag) => <span className="tag">#{tag}</span>);
 
 const TaskContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
-  gap: .6rem;
-  background: #EFEFEF;
-    box-shadow: 2px 2px 12px 0px rgba(0, 0, 0, 0.07);
-    border-radius: .5rem;
-    padding: 1rem;
-    border-left: 10px solid ${({ completed }) =>
+  gap: 0.6rem;
+  background: #efefef;
+  box-shadow: 2px 2px 12px 0px rgba(0, 0, 0, 0.07);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  border-left: 10px solid
+    ${({ completed }) =>
       completed
         ? `
       #000
     `
         : `#B0B0B0`};
 
-    .completed{
-      border-radius: 50px;
-      background: #B0B0B0;
-      color: #fff;
-      padding: 4px 8px;
-    }
+  .completed {
+    border-radius: 50px;
+    background: #b0b0b0;
+    color: #fff;
+    padding: 4px 8px;
+  }
+`;
+
+const Header = styled.div`
+  background: black;
 `;
 
 const SubtaskText = styled.div`
@@ -318,50 +326,51 @@ const SubtaskImage = styled.img`
 `;
 
 const Count = styled.span`
-display: flex;
-width: 32px;
-height: 32px;
-justify-content: center;
-align-items: center;
-border-radius: 50%;
-color: ${({ completed }) =>
-  completed
-    ? `
+  display: flex;
+  width: 32px;
+  height: 32px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  color: ${({ completed }) =>
+    completed
+      ? `
       #fff
     `
-    : `#B0B0B0`};
-border: 1px solid ${({ completed }) =>
-  completed
-    ? `
+      : `#B0B0B0`};
+  border: 1px solid
+    ${({ completed }) =>
+      completed
+        ? `
       #fff
     `
-    : `#B0B0B0`};
-background: ${({ completed }) =>
-  completed
-    ? `
+        : `#B0B0B0`};
+  background: ${({ completed }) =>
+    completed
+      ? `
       #000
     `
-    : `#fff`};
+      : `#fff`};
 `;
 
 const TaskMain = styled.div`
-flex: 1;
+  flex: 1;
 `;
 const TaskReward = styled.div`
-  span{
+  span {
     display: flex;
-padding: 4px 8px;
-justify-content: center;
-align-items: center;
-gap: 4px;
-font-weight: 700;
-border-radius: 50px;
-background: #FFF;
-  opacity: 0.5;
-  width: 70px;
-img{
-  width: 15px !important;
-}
+    padding: 4px 8px;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    font-weight: 700;
+    border-radius: 50px;
+    background: #fff;
+    opacity: 0.5;
+    width: 70px;
+    img {
+      width: 15px !important;
+    }
   }
 `;
 
@@ -390,7 +399,7 @@ const SubtaskList = ({ tasks }) => {
           ) : (
             <TaskReward>
               <span>
-                {questData.reward_amount}{" "}
+                {rewardAmount}{" "}
                 <img
                   src={`https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTrJuxjGxj4QmyreE6ix4ygqm5pK9Nn_rdc8Ndw6lmJcd0SSnm2zBIc2xJ_My1V0WmK2zg&usqp=CAU`}
                   className="near-icon"
@@ -431,9 +440,16 @@ const tasks = [
 
 return (
   <CardRoot>
+    <Header className="d-flex p-3 px-4 align-items-center rounded justify-content-between bg-black">
+    <h3 className="mt-2" style={{ fontFamily: "Courier", color: "white" }}>
+      <Link to="//*__@appAccount__*//widget/app">
+        <b>QuestVerse</b>
+      </Link>
+    </h3>
+    </Header>
     <CardBody>
       <div className="row">
-        <Image></Image>
+        {questData.img_url && <Image />}
         <HeaderText>
           <h1>{questData.title ?? `Lorem Ipsum Misson/Quest/Task`}</h1>
           <Username>
@@ -455,7 +471,15 @@ return (
               )}
           </p>
           <TagsSec>
-            <div className="tags">{tags}</div>
+            <div className="tags d-flex flex-row me-3">
+              <Widget
+                src="hack.near/widget/tags"
+                props={{
+                  path: `${questData.creator}/quest/${questData.quest_id}`,
+                  url: "/bos.questverse.near/widget/pages.Discover",
+                }}
+              />
+            </div>
           </TagsSec>
         </Card>
       </Card>
@@ -463,9 +487,9 @@ return (
         <h5>Details</h5>
         <div className="row gap-2">
           <Card className="col-5">
-            <h6>Reward</h6>
+            <h6>Quest Reward</h6>
             <p className="quest-reward">
-              {questData.reward_amount}{" "}
+              {rewardAmount}{" "}
               <img
                 src={`https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTrJuxjGxj4QmyreE6ix4ygqm5pK9Nn_rdc8Ndw6lmJcd0SSnm2zBIc2xJ_My1V0WmK2zg&usqp=CAU`}
                 className="near-icon"
@@ -473,24 +497,43 @@ return (
             </p>
           </Card>
           <Card className="col-5">
-            <h6>Rewards Remaining</h6>
+            <h6>Total Rewards Remaining</h6>
             <p className="quest-reward">
-              {questData.reward_amount - 1}{" "}
+              {(claimsLeft * rewardAmount).toFixed(4)}
               <img
                 src={`https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTrJuxjGxj4QmyreE6ix4ygqm5pK9Nn_rdc8Ndw6lmJcd0SSnm2zBIc2xJ_My1V0WmK2zg&usqp=CAU`}
                 className="near-icon"
               />
             </p>
+            <p>{claimsLeft} Claims Left</p>
           </Card>
           <div className="w-100"></div>
 
           <Card className="col-5">
+            <h6>Creation Date</h6>
+            <p>{new Date(questData.created_at).toLocaleString()}</p>
+          </Card>
+          <Card className="col-5">
             <h6>Start date</h6>
             <p>{formattedStartDate}</p>
+            <p>{new Date(questData.starts_at).toLocaleString()}</p>
           </Card>
           <Card className="col-5">
             <h6>End date</h6>
-            <p>{formattedEndDate}</p>
+            {questData.ends_at ? (
+              <p>
+                <p>{formattedEndDate}</p>
+
+                {new Date(questData.ends_at).toLocaleString()}
+              </p>
+            ) : (
+              <p> Quest Has Not Ended.</p>
+            )}
+          </Card>
+          <Card className="col-5">
+            <h6>Expiry date</h6>
+            <p>{formattedExpiresDate}</p>
+            <p>{new Date(questData.expires_at).toLocaleString()}</p>
           </Card>
         </div>
       </Card>
@@ -502,7 +545,7 @@ return (
         <h5>Claim Rewards</h5>
         <p>Claim your rewards to complete the quest and earn: </p>
         <p className="quest-reward">
-          {questData.reward_amount}{" "}
+          {rewardAmount}{" "}
           <img
             src={`https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTrJuxjGxj4QmyreE6ix4ygqm5pK9Nn_rdc8Ndw6lmJcd0SSnm2zBIc2xJ_My1V0WmK2zg&usqp=CAU`}
             className="near-icon"

@@ -175,10 +175,12 @@ return (
       {!isVerified && context.accountId && (
         <div className="d-flex flex-column m12">
           <b>{amount} NEAR</b>
-          <Widget
-            src="bos.questverse.near/widget/components.quest.claim"
-            props={{ questId, claimedByUser }}
-          />
+          {!claimedByUser && (
+            <Widget
+              src="bos.questverse.near/widget/components.quest.claim"
+              props={{ questId, claimedByUser }}
+            />
+          )}
           <p className="text-center mt-1">
             <i>{openClaims} left</i>
           </p>
