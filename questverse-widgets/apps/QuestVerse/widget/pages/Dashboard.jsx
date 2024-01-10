@@ -62,10 +62,6 @@ if (!items) {
   return "Loading data...";
 }
 
-if (items.length === 0) {
-  return `No items of type: "${type}" found.`;
-}
-
 function Item(item) {
   return (
     <Widget

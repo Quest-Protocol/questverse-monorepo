@@ -3,6 +3,6 @@
     "aliases": {
         "QUESTVERSE_CONTRACT": "v1.questverse.near",
         "QUERYAPI_CONTRACT": "queryapi.dataplatform.near",
-        "API_SIGNER_SERVICE": "https://"
+        "API_SIGNER_SERVICE": "https://localhost:8080/"
     }
 }

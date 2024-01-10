@@ -1,4 +1,4 @@
-const questContract = "v0.questverse.near";
+const questContract = "v1.questverse.near";
 const questId = JSON.parse(props.questId);
 if (!questId) {
   return "No account or quest id provided";

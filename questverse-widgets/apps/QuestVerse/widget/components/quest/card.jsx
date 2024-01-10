@@ -3,9 +3,10 @@ const questId = props.questId ?? 3;
 const pageUrl = props.url ?? "/bos.questverse.near/widget/pages.Discover";
 const claimedByUser = props.isClaimedByUser ?? false;
 
-const quest = Near.view("v0.questverse.near", "quest_by_id", {
-  quest_id: questId,
-});
+const quest =
+  props.quest ??
+  Near.view("v1.questverse.near", "quest_by_id", { quest_id: questId });
+
 if (!quest) {
   return "quest data missing";
 }
