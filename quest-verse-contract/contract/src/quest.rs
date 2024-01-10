@@ -17,4 +17,8 @@ pub struct Quest {
     pub participants: Vec<AccountId>,
     pub indexer_name: String,
     pub humans_only: bool,
+    pub title: String,
+    pub description: String,
+    pub img_url: String,
+    pub tags: Vec<String>,
 }
