@@ -1,11 +1,11 @@
 const accountId = props.accountId ?? context.accountId;
-const questId = props.questId ?? 3;
+const questId = props.questId;
 const pageUrl = props.url ?? "/bos.questverse.near/widget/pages.Discover";
 const claimedByUser = props.isClaimedByUser ?? false;
 
 const quest =
   props.quest ??
-  Near.view("v1.questverse.near", "quest_by_id", { quest_id: questId });
+  Near.view("/*__@replace:QUESTVERSE_CONTRACT__*/", "quest_by_id", { quest_id: questId });
 
 if (!quest) {
   return "quest data missing";

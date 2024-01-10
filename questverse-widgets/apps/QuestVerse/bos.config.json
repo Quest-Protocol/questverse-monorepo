@@ -1,7 +1,7 @@
 {
     "appAccount": "bos.questverse.near",
     "aliases": {
-        "QUESTVERSE_CONTRACT": "v1.questverse.near",
+        "QUESTVERSE_CONTRACT": "v1-test.questverse.near",
         "QUERYAPI_CONTRACT": "queryapi.dataplatform.near",
         "API_SIGNER_SERVICE": "https://localhost:8080/"
     }

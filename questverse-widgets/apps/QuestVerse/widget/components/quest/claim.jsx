@@ -40,7 +40,7 @@ const claimQuest = () => {
       args: { data },
     },
     {
-      contractName: "v1.questverse.near",
+      contractName: "/*__@replace:QUESTVERSE_CONTRACT__*/",
       methodName: "claim_reward_unverified",
       args: claimArgs,
     },

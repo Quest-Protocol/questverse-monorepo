@@ -1,4 +1,4 @@
-const quests = Near.view("v1.questverse.near", "quests");
+const quests = Near.view("/*__@replace:QUESTVERSE_CONTRACT__*/", "quests");
 console.log("quests", quests);
 
 if (!quests) {

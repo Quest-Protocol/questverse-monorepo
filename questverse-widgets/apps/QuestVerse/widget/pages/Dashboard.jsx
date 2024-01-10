@@ -10,9 +10,10 @@
 // }
 //
 const accountId = props.accountId || context.accountId;
-const quests = Near.view("v0.questverse.near", "quests");
+const quests = Near.view("/*__@replace:QUESTVERSE_CONTRACT__*/", "quests");
+console.log("quests new", quests);
 const user_claimed_quests =
-  Near.view("v0.questverse.near", "claimed_quests_by_user", {
+  Near.view("/*__@replace:QUESTVERSE_CONTRACT__*/", "claimed_quests_by_user", {
     user: accountId,
   }) ?? [];
 

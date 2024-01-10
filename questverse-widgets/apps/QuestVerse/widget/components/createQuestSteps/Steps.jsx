@@ -65,7 +65,7 @@ function handleFormComplete(value) {
       gas,
     },
     {
-      contractName: "v1.questverse.near",
+      contractName: "/*__@replace:QUESTVERSE_CONTRACT__*/",
       methodName: "create_quest",
       args: questArgs.args,
       deposit: (value.tokensAllocated + 0.02) * 1000000000000000000000000,

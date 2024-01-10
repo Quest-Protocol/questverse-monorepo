@@ -80,7 +80,7 @@ function handleFormComplete(value) {
 
   Near.call([
     {
-      contractName: "v1.questverse.near",
+      contractName: "/*__@replace:QUESTVERSE_CONTRACT__*/",
       methodName: "create_quest",
       args: questArgs,
       deposit: "1000000000000000000000000",
